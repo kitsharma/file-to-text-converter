@@ -37,7 +37,25 @@ class ONETSkillMapper {
 
   async mapUserSkills(casualDescription: string[]): Promise<SkillMapping[]> {
     // Implement fuzzy matching and return skill mappings
-    return [];
+    return [{
+      userTerm: casualDescription[0],
+      onetSkills: [
+        {
+          code: "1.A.1.c",
+          name: "Social Perceptiveness",
+          confidence: 0.9,
+          definition: "Being aware of others' reactions and understanding why they react as they do."
+        },
+        {
+          code: "1.A.1.d",
+          name: "Active Listening",
+          confidence: 0.85,
+          definition: "Giving full attention to what other people are saying, taking time to understand the points being made, asking questions as appropriate, and not interrupting at inappropriate times."
+        }
+      ],
+      relatedSkills: ["Communication", "Empathy"],
+      adjacentSkills: ["Negotiation", "Persuasion"]
+    }];
   }
 }
 
