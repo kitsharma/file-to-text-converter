@@ -16,7 +16,7 @@ interface SkillMapping {
 
 class ONETSkillMapper {
   private skillsData: any;
-  private synonyms: Map<string, string[]>;
+  private synonyms: Map<string, string[]> = new Map();
 
   constructor() {
     this.loadONETData();
