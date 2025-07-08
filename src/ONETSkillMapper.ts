@@ -24,13 +24,13 @@ class ONETSkillMapper {
   }
 
   private loadONETData() {
-    const skillsPath = path.resolve(__dirname, 'data/skills.csv');
+    const skillsPath = path.resolve(__dirname, '../data/skills.csv');
     const skillsCSV = readFileSync(skillsPath, 'utf-8');
     // Parse CSV and load into this.skillsData
   }
 
   private buildSynonymDictionary() {
-    const synonymsPath = path.resolve(__dirname, 'data/skills_to_work_activities.csv');
+    const synonymsPath = path.resolve(__dirname, '../data/skills_to_work_activities.csv');
     const synonymsCSV = readFileSync(synonymsPath, 'utf-8');
     // Parse CSV and populate this.synonyms
   }
