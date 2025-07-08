@@ -51,6 +51,24 @@ class ONETSkillMapper {
           name: "Active Listening",
           confidence: 0.85,
           definition: "Giving full attention to what other people are saying, taking time to understand the points being made, asking questions as appropriate, and not interrupting at inappropriate times."
+        },
+        {
+          code: "1.A.1.e",
+          name: "Coordination",
+          confidence: 0.8,
+          definition: "Adjusting actions in relation to others' actions."
+        },
+        {
+          code: "1.A.1.f",
+          name: "Service Orientation",
+          confidence: 0.75,
+          definition: "Actively looking for ways to help people."
+        },
+        {
+          code: "1.A.1.g",
+          name: "Negotiation",
+          confidence: 0.7,
+          definition: "Bringing others together and trying to reconcile differences."
         }
       ],
       relatedSkills: ["Communication", "Empathy"],
