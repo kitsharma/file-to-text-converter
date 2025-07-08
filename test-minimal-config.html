@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Minimal API Config</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+        .api-key-form { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Minimal API Configuration Test</h1>
+    
+    <div class="api-key-form">
+        <h3>Configure API Keys</h3>
+        <input type="password" id="openaiKey" placeholder="OpenAI API Key">
+        <button onclick="setApiKey('openai')">Set OpenAI Key</button><br>
+        
+        <input type="password" id="onetKey" placeholder="O*NET Username">
+        <button onclick="setApiKey('onet')">Set O*NET Key</button><br>
+        
+        <button onclick="clearAllKeys()">Clear All Keys</button>
+        <button onclick="showConfiguredServices()">Show Configured Services</button>
+    </div>
+
+    <div>
+        <button onclick="testBasicConfig()">Test Basic Configuration</button>
+        <button onclick="testRateLimiter()">Test Rate Limiter</button>
+        <button onclick="testCache()">Test Cache</button>
+        <button onclick="testAPIClient()">Test API Client</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script src="minimal-api-config.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function setApiKey(service) {
+            const input = document.getElementById(service + 'Key');
+            const key = input.value.trim();
+            
+            if (key) {
+                const config = new MinimalAPIConfig();
+                config.setApiKey(service, key);
+                log(`✅ ${service.toUpperCase()} API key set successfully`, 'success');
+                input.value = '';
+            } else {
+                log('❌ Please enter an API key', 'error');
+            }
+        }
+
+        function clearAllKeys() {
+            const config = new MinimalAPIConfig();
+            ['openai', 'perplexity', 'bls', 'onet', 'careeronestop'].forEach(service => {
+                config.setApiKey(service, '');
+            });
+            log('🗑️ All API keys cleared', 'info');
+        }
+
+        function showConfiguredServices() {
+            const config = new MinimalAPIConfig();
+            const services = config.getConfiguredServices();
+            log(`📋 Configured services: ${services.length > 0 ? services.join(', ') : 'None'}`, 'info');
+        }
+
+        function testBasicConfig() {
+            log('Testing Basic Configuration...', 'info');
+            
+            try {
+                const config = new MinimalAPIConfig();
+                log('✅ MinimalAPIConfig instantiated', 'success');
+                
+                // Test endpoint access
+                const openaiEndpoint = config.getEndpoint('openai');
+                if (openaiEndpoint) {
+                    log(`✅ OpenAI endpoint: ${openaiEndpoint}`, 'success');
+                } else {
+                    log('❌ Failed to get OpenAI endpoint', 'error');
+                }
+                
+                // Test API key functionality
+                config.setApiKey('test', 'test-key-123');
+                const retrievedKey = config.getApiKey('test');
+                if (retrievedKey === 'test-key-123') {
+                    log('✅ API key storage and retrieval working', 'success');
+                    config.setApiKey('test', ''); // Clean up
+                } else {
+                    log('❌ API key storage failed', 'error');
+                }
+                
+                log('Basic configuration test completed!', 'success');
+                
+            } catch (error) {
+                log(`❌ Configuration test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testRateLimiter() {
+            log('Testing Rate Limiter...', 'info');
+            
+            try {
+                const rateLimiter = new SimpleRateLimiter(3); // Low limit for testing
+                log('✅ SimpleRateLimiter instantiated', 'success');
+                
+                // Test normal requests
+                for (let i = 0; i < 3; i++) {
+                    if (rateLimiter.recordRequest()) {
+                        log(`✅ Request ${i + 1} allowed`, 'success');
+                    } else {
+                        log(`❌ Request ${i + 1} denied`, 'error');
+                    }
+                }
+                
+                // Test rate limit exceeded
+                if (!rateLimiter.recordRequest()) {
+                    log('✅ Rate limit correctly enforced', 'success');
+                } else {
+                    log('❌ Rate limit not working', 'error');
+                }
+                
+                const remaining = rateLimiter.getRemainingRequests();
+                log(`📊 Remaining requests: ${remaining}`, 'info');
+                
+                log('Rate limiter test completed!', 'success');
+                
+            } catch (error) {
+                log(`❌ Rate limiter test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testCache() {
+            log('Testing Cache...', 'info');
+            
+            try {
+                const cache = new SimpleCache(1); // 1 minute TTL
+                log('✅ SimpleCache instantiated', 'success');
+                
+                // Test cache set/get
+                cache.set('test-key', { data: 'test-value', timestamp: Date.now() });
+                const cached = cache.get('test-key');
+                
+                if (cached && cached.data === 'test-value') {
+                    log('✅ Cache storage and retrieval working', 'success');
+                } else {
+                    log('❌ Cache functionality failed', 'error');
+                }
+                
+                // Test cache miss
+                const missing = cache.get('nonexistent-key');
+                if (missing === null) {
+                    log('✅ Cache miss handled correctly', 'success');
+                } else {
+                    log('❌ Cache miss not handled', 'error');
+                }
+                
+                log('Cache test completed!', 'success');
+                
+            } catch (error) {
+                log(`❌ Cache test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testAPIClient() {
+            log('Testing API Client...', 'info');
+            
+            try {
+                const client = new SimpleAPIClient();
+                log('✅ SimpleAPIClient instantiated', 'success');
+                
+                // Test without API keys (should fail gracefully)
+                client.callOpenAI([{ role: 'user', content: 'Hello' }])
+                    .then(response => {
+                        log('✅ OpenAI API call successful', 'success');
+                    })
+                    .catch(error => {
+                        if (error.message.includes('No API key')) {
+                            log('✅ API key validation working (no key configured)', 'success');
+                        } else {
+                            log(`ℹ️ API call failed as expected: ${error.message}`, 'info');
+                        }
+                    });
+                
+                // Test rate limiter integration
+                const rateLimitStatus = client.rateLimiter.getRemainingRequests();
+                log(`📊 Rate limiter integrated: ${rateLimitStatus} requests remaining`, 'info');
+                
+                // Test cache integration
+                client.cache.set('test', 'cached-data');
+                const cached = client.cache.get('test');
+                if (cached === 'cached-data') {
+                    log('✅ Cache integrated correctly', 'success');
+                }
+                
+                log('API client test completed!', 'success');
+                
+            } catch (error) {
+                log(`❌ API client test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run basic test on load
+        window.onload = function() {
+            log('🚀 Minimal API Configuration Test Loaded', 'info');
+            log('Configure API keys above, then run tests below', 'info');
+        };
+    </script>
+</body>
+</html>

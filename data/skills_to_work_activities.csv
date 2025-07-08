@@ -1,0 +1,18 @@
+element_id,work_activity_id,work_activity_description,importance_rating
+2.A.1.a,4.A.4.a.1,"Listen to and understand customer concerns",4.8
+2.A.1.b,4.A.1.a.2,"Read and interpret customer emails and chat transcripts",4.6
+2.B.5.c,4.A.4.b.5,"Use CRM software to document customer interactions",4.9
+2.B.4.g,4.A.4.c.3,"Analyze customer feedback data to identify service improvements",4.5
+2.C.3.a,4.A.4.d.2,"Resolve customer complaints and escalate when necessary",4.7
+2.D.1.b,4.A.5.a.1,"Train and mentor junior customer service representatives",4.4
+2.E.2.a,4.A.4.e.4,"Mediate disputes between customers and company policies",4.3
+2.F.1.a,4.A.4.f.1,"Respond to customer inquiries across multiple communication channels",4.8
+These raw CSV files represent the foundational data that would be parsed by the application. Using this government-sourced taxonomy ensures that the AI's analysis is grounded in a standardized, trustworthy framework, which is critical for building user confidence and delivering consistent results. Thank you for the correction.
+
+just create them so I can paste them into a file
+just create them so I can paste them into a file
+text
+# skills.csv
+element_id,skill_name,skill_description
+2.A.1.a,"Reading Comprehension","Understanding written sentences and paragraphs in work-related documents."
+2.A.1.b,"Active Listening","Giving full attention to what other people are saying, taking time to understand the points being made"

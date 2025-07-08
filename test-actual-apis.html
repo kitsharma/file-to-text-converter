@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Actual API Integration</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Test Actual API Integration</h1>
+    <div id="output"></div>
+    
+    <button onclick="testConfig()">Test 1: Configuration</button>
+    <button onclick="testONET()">Test 2: O*NET Service</button>
+    
+    <!-- Load all the actual API files -->
+    <script src="config.js"></script>
+    <script src="onet-service.js"></script>
+    <script src="government-data-service.js"></script>
+    <script src="skill-reframing-service.js"></script>
+    <script src="ai-job-matcher.js"></script>
+    <script src="api-interceptor.js"></script>
+    
+    <script>
+        function log(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('output').appendChild(div);
+        }
+        
+        async function testConfig() {
+            log('Testing Configuration...');
+            
+            try {
+                // Test the actual APIConfig class
+                const config = new APIConfig();
+                log('✅ APIConfig instantiated successfully');
+                
+                // Check available services
+                const services = config.getAvailableServices();
+                log(`✅ Available services: ${services.length > 0 ? services.join(', ') : 'None configured'}`);
+                
+                // Test cache
+                const cache = new APICache();
+                cache.set('test_key', { data: 'test' });
+                const cached = cache.get('test_key');
+                if (cached && cached.data === 'test') {
+                    log('✅ APICache working correctly');
+                } else {
+                    log('❌ APICache failed', 'error');
+                }
+                
+                // Test rate limiter
+                const rateLimiter = new RateLimiter();
+                const canRequest = rateLimiter.canMakeRequest();
+                if (canRequest.allowed) {
+                    log('✅ RateLimiter working correctly');
+                } else {
+                    log('❌ RateLimiter failed', 'error');
+                }
+                
+                // Test cost tracker
+                const costTracker = new CostTracker();
+                const usage = costTracker.getUsage();
+                log(`✅ CostTracker initialized - Daily limit: $${usage.daily.limit}`);
+                
+            } catch (error) {
+                log(`❌ Configuration test failed: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        async function testONET() {
+            log('Testing O*NET Service...');
+            
+            try {
+                // Test the actual ONETService class
+                const onetService = new ONETService();
+                log('✅ ONETService instantiated successfully');
+                
+                // Wait for initialization
+                await onetService.ensureInitialized();
+                log('✅ ONETService initialized with embedded data');
+                
+                // Test skill search
+                const skills = await onetService.searchSkills('programming', 3);
+                if (skills && skills.length > 0) {
+                    log(`✅ Skill search found ${skills.length} results`);
+                    skills.forEach(skill => {
+                        log(`  - ${skill.matchedSkill.element_name} (${Math.round(skill.similarity * 100)}% match)`);
+                    });
+                } else {
+                    log('❌ No skills found', 'error');
+                }
+                
+                // Test occupation search
+                const occupations = await onetService.searchOccupations('software developer', 3);
+                if (occupations && occupations.length > 0) {
+                    log(`✅ Occupation search found ${occupations.length} results`);
+                    occupations.forEach(occ => {
+                        log(`  - ${occ.title} (${Math.round(occ.similarity * 100)}% match)`);
+                    });
+                } else {
+                    log('❌ No occupations found', 'error');
+                }
+                
+                // Get service status
+                const status = onetService.getServiceStatus();
+                log(`✅ Service status: ${status.skillsCount} skills, ${status.occupationsCount} occupations loaded`);
+                
+            } catch (error) {
+                log(`❌ O*NET test failed: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // Log when page loads
+        window.onload = function() {
+            log('🚀 API Integration Test Page Loaded');
+            log('Click the buttons above to test each API service');
+        };
+    </script>
+</body>
+</html>

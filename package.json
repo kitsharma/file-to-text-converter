@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@types/fast-levenshtein": "^0.0.4",
+    "@types/jest": "^30.0.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "fast-levenshtein": "^3.0.0"
+  }
+}

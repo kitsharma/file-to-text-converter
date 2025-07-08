@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Test</title>
+</head>
+<body>
+    <h1>Minimal Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Test 1: Basic JavaScript works
+        document.getElementById('output').innerHTML = '<p>✅ JavaScript is working</p>';
+        
+        // Test 2: Can we create a basic class?
+        try {
+            class TestClass {
+                constructor() {
+                    this.message = 'Class instantiated';
+                }
+            }
+            const test = new TestClass();
+            document.getElementById('output').innerHTML += '<p>✅ Classes work: ' + test.message + '</p>';
+        } catch (e) {
+            document.getElementById('output').innerHTML += '<p>❌ Class error: ' + e.message + '</p>';
+        }
+        
+        // Test 3: localStorage
+        try {
+            localStorage.setItem('test', 'value');
+            const val = localStorage.getItem('test');
+            document.getElementById('output').innerHTML += '<p>✅ localStorage works: ' + val + '</p>';
+        } catch (e) {
+            document.getElementById('output').innerHTML += '<p>❌ localStorage error: ' + e.message + '</p>';
+        }
+    </script>
+</body>
+</html>

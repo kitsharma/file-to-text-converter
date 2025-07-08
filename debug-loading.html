@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Script Loading</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .log { margin: 5px 0; padding: 5px; background: #f0f0f0; }
+        .error { background: #ffcccc; }
+        .success { background: #ccffcc; }
+    </style>
+</head>
+<body>
+    <h1>Debug Script Loading Order</h1>
+    <div id="log"></div>
+    
+    <script>
+        const log = (message, type = '') => {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toTimeString().split(' ')[0]}] ${message}`;
+            document.getElementById('log').appendChild(div);
+            console.log(message);
+        };
+        
+        window.addEventListener('error', (e) => {
+            log(`ERROR: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`, 'error');
+        });
+        
+        log('Starting script loading test...');
+    </script>
+    
+    <!-- Test loading config.js step by step -->
+    <script>
+        log('Before loading config.js');
+        log(`window.APIConfig exists: ${typeof window.APIConfig !== 'undefined'}`);
+    </script>
+    
+    <script src="config.js" onload="log('config.js loaded', 'success')" onerror="log('config.js failed to load', 'error')"></script>
+    
+    <script>
+        log('After config.js script tag');
+        setTimeout(() => {
+            log('After timeout - checking globals:');
+            log(`- window.APIConfig: ${typeof window.APIConfig}`);
+            log(`- window.apiConfig: ${typeof window.apiConfig}`);
+            log(`- APIConfig (global): ${typeof APIConfig}`);
+            log(`- apiConfig (global): ${typeof apiConfig}`);
+            
+            if (typeof APIConfig !== 'undefined') {
+                try {
+                    const testConfig = new APIConfig();
+                    log('✓ APIConfig instantiation successful', 'success');
+                } catch (e) {
+                    log(`✗ APIConfig instantiation failed: ${e.message}`, 'error');
+                }
+            }
+        }, 100);
+    </script>
+</body>
+</html>

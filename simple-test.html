@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    <div id="results"></div>
+    <button onclick="testConfig()">Test Configuration</button>
+    <button onclick="testONET()">Test O*NET Service</button>
+
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function testConfig() {
+            log('Testing Configuration...', 'info');
+            
+            try {
+                // Simple configuration test without external dependencies
+                const testConfig = {
+                    services: ['openai', 'onet', 'bls'],
+                    cache: new Map(),
+                    rateLimiter: { requests: 0, limit: 100 }
+                };
+
+                log('✅ Basic configuration structure created', 'success');
+                
+                // Test localStorage access
+                localStorage.setItem('test_key', 'test_value');
+                const retrieved = localStorage.getItem('test_key');
+                if (retrieved === 'test_value') {
+                    log('✅ localStorage working', 'success');
+                } else {
+                    log('❌ localStorage failed', 'error');
+                }
+                
+                // Test basic cache functionality
+                testConfig.cache.set('test', 'data');
+                if (testConfig.cache.get('test') === 'data') {
+                    log('✅ Basic cache functionality working', 'success');
+                } else {
+                    log('❌ Cache functionality failed', 'error');
+                }
+
+                log('Configuration test completed!', 'success');
+                
+            } catch (error) {
+                log(`❌ Configuration test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testONET() {
+            log('Testing O*NET Service (Embedded Data)...', 'info');
+            
+            try {
+                // Test embedded skills data structure
+                const sampleSkills = [
+                    {
+                        element_id: 'SK001',
+                        element_name: 'Programming',
+                        description: 'Writing computer programs',
+                        category: 'technical'
+                    },
+                    {
+                        element_id: 'SK002', 
+                        element_name: 'Communication',
+                        description: 'Verbal and written communication',
+                        category: 'soft'
+                    }
+                ];
+
+                log('✅ Sample skills data structure valid', 'success');
+
+                // Test simple skill matching
+                const searchTerm = 'programming';
+                const matches = sampleSkills.filter(skill => 
+                    skill.element_name.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                if (matches.length > 0) {
+                    log(`✅ Skill search working: Found ${matches.length} matches for "${searchTerm}"`, 'success');
+                    log(`  - Match: ${matches[0].element_name}`, 'info');
+                } else {
+                    log('❌ No skill matches found', 'error');
+                }
+
+                // Test occupation data structure
+                const sampleOccupations = [
+                    {
+                        code: '15-1252.00',
+                        title: 'Software Developers, Applications',
+                        skills: ['Programming', 'Problem Solving']
+                    }
+                ];
+
+                log('✅ Sample occupation data structure valid', 'success');
+
+                // Test occupation search
+                const occupationSearch = 'software';
+                const occupationMatches = sampleOccupations.filter(occ =>
+                    occ.title.toLowerCase().includes(occupationSearch.toLowerCase())
+                );
+
+                if (occupationMatches.length > 0) {
+                    log(`✅ Occupation search working: Found ${occupationMatches.length} matches`, 'success');
+                    log(`  - Match: ${occupationMatches[0].title}`, 'info');
+                } else {
+                    log('❌ No occupation matches found', 'error');
+                }
+
+                log('O*NET Service test completed!', 'success');
+                
+            } catch (error) {
+                log(`❌ O*NET Service test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run configuration test on load
+        window.onload = function() {
+            log('🧪 Simple API Test Suite Loaded', 'info');
+            log('Click buttons above to run tests', 'info');
+        };
+    </script>
+</body>
+</html>

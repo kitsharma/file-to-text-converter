@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Integration Test Suite</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .test-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+        }
+
+        .test-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .test-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .test-log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .test-results {
+            margin-top: 20px;
+        }
+
+        .test-result {
+            background: #f8f9fa;
+            border-left: 4px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .test-result.success {
+            border-left-color: #28a745;
+            background: #e8f5e8;
+        }
+
+        .test-result.error {
+            border-left-color: #dc3545;
+            background: #ffebee;
+        }
+
+        .test-result h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .test-result pre {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .api-config-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .api-config-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .config-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-status {
+            font-weight: bold;
+        }
+
+        .config-status.configured {
+            color: #28a745;
+        }
+
+        .config-status.missing {
+            color: #dc3545;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 API Integration Test Suite</h1>
+        
+        <div class="api-config-section">
+            <h3>⚙️ API Configuration Status</h3>
+            <p>Before testing APIs, make sure you have configured your API keys. Create a <code>.env</code> file or set them in localStorage.</p>
+            <div id="configStatus">Loading configuration...</div>
+        </div>
+
+        <div class="test-controls">
+            <button class="test-btn" onclick="runTest('configuration')" id="testConfigBtn">
+                Test 1: Configuration
+            </button>
+            <button class="test-btn" onclick="runTest('onet')" id="testOnetBtn" disabled>
+                Test 2: O*NET Service
+            </button>
+            <button class="test-btn" onclick="runTest('bls')" id="testBlsBtn" disabled>
+                Test 3: BLS API
+            </button>
+            <button class="test-btn" onclick="runTest('openai')" id="testOpenaiBtn" disabled>
+                Test 4: OpenAI API
+            </button>
+            <button class="test-btn" onclick="runTest('perplexity')" id="testPerplexityBtn" disabled>
+                Test 5: Perplexity API
+            </button>
+            <button class="test-btn" onclick="clearLog()" style="background: #6c757d;">
+                Clear Log
+            </button>
+        </div>
+
+        <div class="summary-stats" id="summaryStats" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-value" id="totalTests">0</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="passedTests">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="failedTests">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="successRate">0%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+
+        <div class="test-log" id="testLog">Ready to run tests...\n</div>
+        
+        <div class="test-results" id="testResults"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="government-data-service.js"></script>
+    <script src="skill-reframing-service.js"></script>
+    <script src="ai-job-matcher.js"></script>
+    <script src="onet-service.js"></script>
+    <script src="api-interceptor.js"></script>
+    <script src="test-apis.js"></script>
+
+    <script>
+        let currentTestIndex = 0;
+        const testButtons = [
+            'testConfigBtn',
+            'testOnetBtn', 
+            'testBlsBtn',
+            'testOpenaiBtn',
+            'testPerplexityBtn'
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            displayConfigurationStatus();
+        });
+
+        function displayConfigurationStatus() {
+            const config = new APIConfig();
+            const services = ['openai', 'perplexity', 'claude', 'bls', 'onet', 'careeronestop', 'fred'];
+            
+            let html = '';
+            services.forEach(service => {
+                const isConfigured = config.isConfigured(service);
+                const status = isConfigured ? 'configured' : 'missing';
+                const statusText = isConfigured ? '✅ Configured' : '❌ Missing';
+                
+                html += `
+                    <div class="config-item">
+                        <span>${service.toUpperCase()} API</span>
+                        <span class="config-status ${status}">${statusText}</span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('configStatus').innerHTML = html;
+        }
+
+        async function runTest(testName) {
+            const btn = document.getElementById(`test${testName.charAt(0).toUpperCase() + testName.slice(1)}Btn`);
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            
+            try {
+                let success = false;
+                
+                switch(testName) {
+                    case 'configuration':
+                        success = await apiTester.testConfiguration();
+                        break;
+                    case 'onet':
+                        success = await apiTester.testONETService();
+                        break;
+                    case 'bls':
+                        success = await apiTester.testBLSAPI();
+                        break;
+                    default:
+                        apiTester.log(`Test for ${testName} not implemented yet`, 'warn');
+                        success = false;
+                }
+                
+                if (success) {
+                    btn.textContent = '✅ Passed';
+                    btn.style.background = '#28a745';
+                    
+                    // Enable next test
+                    if (currentTestIndex < testButtons.length - 1) {
+                        const nextBtn = document.getElementById(testButtons[currentTestIndex + 1]);
+                        if (nextBtn) {
+                            nextBtn.disabled = false;
+                        }
+                    }
+                    currentTestIndex++;
+                } else {
+                    btn.textContent = '❌ Failed';
+                    btn.style.background = '#dc3545';
+                }
+                
+                apiTester.displayResults();
+                updateSummaryStats();
+                
+            } catch (error) {
+                apiTester.log(`Test ${testName} encountered error: ${error.message}`, 'error');
+                btn.textContent = '❌ Error';
+                btn.style.background = '#dc3545';
+            }
+        }
+
+        function updateSummaryStats() {
+            const summary = apiTester.getSummary();
+            
+            if (summary.total > 0) {
+                document.getElementById('summaryStats').style.display = 'grid';
+                document.getElementById('totalTests').textContent = summary.total;
+                document.getElementById('passedTests').textContent = summary.passed;
+                document.getElementById('failedTests').textContent = summary.failed;
+                document.getElementById('successRate').textContent = summary.success_rate + '%';
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = 'Log cleared...\n';
+            apiTester.testLog = [];
+        }
+
+        // Allow setting API keys via localStorage for testing
+        function setTestApiKey(service, key) {
+            localStorage.setItem(`${service.toUpperCase()}_API_KEY`, key);
+            displayConfigurationStatus();
+        }
+
+        // Expose for console testing
+        window.setTestApiKey = setTestApiKey;
+        window.apiTester = apiTester;
+    </script>
+</body>
+</html>
