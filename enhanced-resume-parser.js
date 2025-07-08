@@ -56,6 +56,9 @@ class EnhancedResumeParser {
                 this.onetSkillMapper = new ONETSkillMapper();
                 await this.onetSkillMapper.initialize();
                 console.log('ONET skill mapper initialized successfully');
+            } else {
+                console.warn('ONETSkillMapper class not available');
+                this.onetSkillMapper = null;
             }
         } catch (error) {
             console.warn('ONET skill mapper initialization failed, using fallback:', error);
@@ -90,7 +93,14 @@ class EnhancedResumeParser {
             
             // Phase 2: Extract skills and education (40% progress)
             this.updateProgress(30, `Identifying your ${experience.length > 0 ? experience.length + ' career achievements' : 'professional skills'}...`);
-            const skills = await this.extractSkills(text);
+            
+            let skills = [];
+            try {
+                skills = await this.extractSkills(text);
+            } catch (skillsError) {
+                console.warn('Skills extraction failed, using fallback:', skillsError);
+                skills = this.extractBasicSkills(text);
+            }
             
             // Extract skills from experience descriptions with specific feedback
             if (skills.length > 0) {
@@ -99,9 +109,15 @@ class EnhancedResumeParser {
                 this.updateProgress(35, 'Analyzing your unique capabilities...');
             }
             
+            // Process experience skills with error handling
             for (const exp of experience) {
                 if (exp.skillsText) {
-                    exp.skills = await this.extractSkillsFromText(exp.skillsText);
+                    try {
+                        exp.skills = await this.extractSkillsFromText(exp.skillsText);
+                    } catch (expSkillsError) {
+                        console.warn('Experience skills extraction failed:', expSkillsError);
+                        exp.skills = [];
+                    }
                     delete exp.skillsText; // Clean up temporary field
                 } else {
                     exp.skills = [];
@@ -200,16 +216,28 @@ class EnhancedResumeParser {
         const experience = [];
         const sections = this.splitIntoSections(text);
         
+        console.log('[DEBUG] Found sections:', sections.map(s => s.header));
+        
         // Find experience section
         let experienceSection = null;
         for (const section of sections) {
+            console.log('[DEBUG] Testing section header:', section.header);
             if (/experience|employment|work|career|professional/i.test(section.header)) {
+                console.log('[DEBUG] Found experience section with header:', section.header);
                 experienceSection = section.content;
                 break;
             }
         }
 
-        if (!experienceSection) return experience;
+        if (!experienceSection) {
+            console.log('[DEBUG] No experience section found, trying fallback...');
+            // Fallback: look for job titles and companies in the text
+            experienceSection = this.extractExperienceWithoutHeaders(text);
+            if (!experienceSection) {
+                console.log('[DEBUG] No experience found even with fallback');
+                return experience;
+            }
+        }
 
         // Parse individual experiences
         const experienceBlocks = experienceSection.split(/\n\s*\n/).filter(block => block.trim().length > 20);
@@ -271,6 +299,47 @@ class EnhancedResumeParser {
         return experience;
     }
 
+    extractExperienceWithoutHeaders(text) {
+        // Fallback method: look for patterns that suggest work experience
+        // Look for company names followed by job titles or dates
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        // Look for patterns like:
+        // "Company Name" followed by dates
+        // "Job Title" followed by company
+        // Date ranges
+        
+        let experienceContent = '';
+        let foundExperience = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Skip headers and common resume sections
+            if (/^(education|skills|summary|objective|certifications|awards)/i.test(line)) {
+                continue;
+            }
+            
+            // Look for date patterns (strong indicator of experience)
+            if (/\d{4}.*\d{4}|present|current/i.test(line)) {
+                foundExperience = true;
+                experienceContent += line + '\n';
+                
+                // Include surrounding context
+                if (i > 0) experienceContent = lines[i-1] + '\n' + experienceContent;
+                if (i < lines.length - 1) experienceContent += lines[i+1] + '\n';
+            }
+            
+            // Look for job title patterns
+            if (/(manager|analyst|developer|specialist|coordinator|assistant|director|lead|engineer|consultant)/i.test(line)) {
+                foundExperience = true;
+                experienceContent += line + '\n';
+            }
+        }
+        
+        return foundExperience ? experienceContent : null;
+    }
+
     async extractSkills(text) {
         const allSkills = [
             ...this.skillsDatabase.technical,
@@ -314,6 +383,32 @@ class EnhancedResumeParser {
 
         // Remove duplicates and return
         return [...new Set(foundSkills)];
+    }
+
+    extractBasicSkills(text) {
+        // Fallback method for basic skills extraction without ONET
+        const basicSkills = [];
+        const textLower = text.toLowerCase();
+        
+        // Use only our database skills for basic extraction
+        const allSkills = [
+            ...this.skillsDatabase.technical,
+            ...this.skillsDatabase.soft,
+            ...this.skillsDatabase.tools
+        ];
+        
+        for (const skill of allSkills) {
+            const skillLower = skill.toLowerCase();
+            if (textLower.includes(skillLower)) {
+                // Verify it's a whole word match
+                const regex = new RegExp(`\\b${skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                if (regex.test(text)) {
+                    basicSkills.push(skill);
+                }
+            }
+        }
+        
+        return [...new Set(basicSkills)];
     }
 
     extractSkillPhrases(text) {
@@ -539,6 +634,16 @@ class EnhancedResumeParser {
                 name: contactInfo.name ? '[REDACTED]' : null,
                 email: contactInfo.email ? '[REDACTED]' : null,
                 phone: contactInfo.phone ? '[REDACTED]' : null,
+                location: contactInfo.location,
+                linkedin: contactInfo.linkedin,
+                website: contactInfo.website
+            },
+            
+            // Original contact values for privacy toggle functionality
+            originalContact: {
+                name: contactInfo.name,
+                email: contactInfo.email,
+                phone: contactInfo.phone,
                 location: contactInfo.location,
                 linkedin: contactInfo.linkedin,
                 website: contactInfo.website

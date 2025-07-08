@@ -29,16 +29,22 @@ class ONETSkillMapper {
 
   async loadONETData() {
     try {
-      const response = await fetch('/data/skills.csv');
+      // Try to load from relative path first
+      let response = await fetch('./data/skills.csv');
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try absolute path
+        response = await fetch('/data/skills.csv');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status} - Could not load skills data`);
+        }
       }
+      
       const skillsCSV = await response.text();
       
       // Parse skills CSV
       const skillsLines = skillsCSV.split('\n').filter(line => line.trim());
       if (skillsLines.length < 2) {
-        throw new Error('Invalid skills CSV format');
+        throw new Error('Invalid skills CSV format - insufficient data');
       }
       
       const skillsHeaders = skillsLines[0].split(',').map(h => h.replace(/"/g, '').trim());
@@ -56,6 +62,10 @@ class ONETSkillMapper {
             skill_description: fields[2]
           });
         }
+      }
+      
+      if (this.skillsData.length === 0) {
+        throw new Error('No valid skills data found in CSV');
       }
       
       console.log(`Loaded ${this.skillsData.length} skills from CSV`);

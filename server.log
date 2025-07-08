@@ -1,0 +1,25 @@
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /ux-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /skills-analysis-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /improved-ux-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /privacy-control-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /career-resilience-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /config.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /onet-skill-mapper.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /enhanced-onet-mapper.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /skills-analysis-display.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /government-data-service.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /smart-redaction-service.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /ai-job-matcher.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /skill-reframing-service.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /onet-service.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /api-interceptor.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /pii-detector.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:33] "GET /resume-parser.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:34] "GET /enhanced-resume-parser.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:34] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:34] "GET /ux-enhanced-resume-display.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:34] code 404, message File not found
+127.0.0.1 - - [08/Jul/2025 15:59:34] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [08/Jul/2025 15:59:34] "GET /data/skills.csv HTTP/1.1" 200 -
+127.0.0.1 - - [08/Jul/2025 15:59:34] "GET /data/skills.csv HTTP/1.1" 200 -

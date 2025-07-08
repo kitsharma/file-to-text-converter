@@ -1,0 +1,57 @@
+Sarah Johnson
+Senior Product Manager
+sarah.johnson@techcorp.com
+(555) 123-4567
+San Francisco, CA
+
+PROFESSIONAL EXPERIENCE
+
+Senior Product Manager
+Google Inc | March 2020 - Present
+• Led cross-functional team of 12 engineers and designers to deliver new search features
+• Increased user engagement by 35% through data-driven product improvements
+• Managed $2M product budget and coordinated with stakeholders across 5 departments
+• Mentored 3 junior product managers and established PM onboarding program
+• Collaborated with marketing team to launch products to 100M+ users globally
+
+Product Manager
+Microsoft Corporation | June 2018 - February 2020
+• Launched Office 365 collaboration features used by 50M+ business customers
+• Conducted user research with 200+ customers to identify pain points and opportunities
+• Worked closely with engineering teams to define technical requirements
+• Presented quarterly business reviews to VP-level executives
+• Led agile development process with 8-person scrum team
+
+Associate Product Manager
+Amazon Web Services | August 2016 - May 2018
+• Supported product launches for cloud infrastructure services
+• Analyzed customer feedback and usage data to improve product features
+• Created product documentation and training materials for sales team
+• Coordinated with legal and compliance teams for enterprise customer requirements
+• Participated in on-call rotation for critical service monitoring
+
+Marketing Coordinator
+Salesforce | January 2015 - July 2016
+• Managed social media campaigns reaching 500K+ followers
+• Organized industry conferences and trade show participation
+• Created marketing collateral and sales enablement materials
+• Supported lead generation activities and customer outreach programs
+• Analyzed campaign performance metrics and ROI reporting
+
+EDUCATION
+
+Master of Business Administration
+Stanford University Graduate School of Business | 2016
+Concentration: Technology and Innovation Management
+GPA: 3.8/4.0
+
+Bachelor of Science in Computer Science
+University of California, Berkeley | 2014
+Minor: Business Administration
+GPA: 3.6/4.0
+Dean's List: Fall 2013, Spring 2014
+
+SKILLS
+Product Management, User Research, Data Analysis, Agile Development, Stakeholder Management, 
+Cross-functional Leadership, Strategic Planning, A/B Testing, SQL, Python, Tableau, Jira, 
+Project Management, Communication, Problem Solving, Team Leadership, Customer Focus

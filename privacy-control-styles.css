@@ -1,0 +1,420 @@
+/* Privacy Control Styles - Trust-building UI */
+
+.privacy-control {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.privacy-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.privacy-header h2 {
+    color: #333;
+    font-size: 2.2rem;
+    font-weight: 400;
+    margin-bottom: 15px;
+}
+
+.privacy-subtitle {
+    color: #666;
+    font-size: 1.2rem;
+    line-height: 1.6;
+}
+
+/* Trust Message */
+.trust-message {
+    margin-bottom: 40px;
+}
+
+.trust-card {
+    background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+    border: 1px solid #d1d9ff;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.trust-card h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+.trust-card p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 15px;
+}
+
+.trust-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.trust-card li {
+    padding: 10px 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.trust-promise {
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-top: 20px;
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+/* Redaction Controls */
+.redaction-controls {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.redaction-controls h3 {
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 1.3rem;
+}
+
+.redaction-items {
+    display: grid;
+    gap: 20px;
+}
+
+.privacy-item {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.privacy-item.recommended {
+    border-color: #667eea;
+    background: #f5f7ff;
+}
+
+.privacy-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.privacy-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.privacy-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.privacy-icon {
+    font-size: 1.4rem;
+}
+
+.privacy-type {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.recommended-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.privacy-item-details {
+    margin-left: 40px;
+}
+
+.redaction-example {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.original-value {
+    color: #dc3545;
+    flex: 1;
+}
+
+.arrow {
+    color: #999;
+    font-weight: bold;
+}
+
+.redacted-value {
+    color: #28a745;
+    flex: 1;
+}
+
+.privacy-reason {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Preview Section */
+.redaction-preview {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.redaction-preview h3 {
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 1.3rem;
+}
+
+.preview-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.preview-before,
+.preview-after {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.preview-before {
+    border: 2px solid #ffcdd2;
+}
+
+.preview-after {
+    border: 2px solid #c8e6c9;
+}
+
+.preview-before h4,
+.preview-after h4 {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.preview-before h4 {
+    color: #c62828;
+}
+
+.preview-after h4 {
+    color: #2e7d32;
+}
+
+.preview-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.preview-content h5 {
+    color: #333;
+    margin: 15px 0 10px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.preview-content p {
+    margin: 5px 0;
+    color: #555;
+}
+
+.preview-content .redacted {
+    background: #28a745;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Privacy Actions */
+.privacy-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.privacy-btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.privacy-btn.primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.privacy-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.privacy-btn.secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.privacy-btn.secondary:hover {
+    background: #f5f7ff;
+    transform: translateY(-1px);
+}
+
+.privacy-btn.ghost {
+    background: transparent;
+    color: #999;
+    text-decoration: underline;
+    font-size: 0.95rem;
+    padding: 10px 20px;
+}
+
+.privacy-btn.ghost:hover {
+    color: #666;
+}
+
+/* Toggle Switch (Enhanced) */
+.toggle-switch {
+    position: relative;
+    width: 54px;
+    height: 28px;
+    background: #ccc;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-switch:hover {
+    background: #aaa;
+}
+
+.toggle-switch.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.toggle-switch .toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active .toggle-slider {
+    transform: translateX(26px);
+}
+
+/* Inline Redaction Controls */
+.contact-value-wrapper,
+.item-company-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contact-value.redacted,
+.item-company.redacted {
+    background: #28a745;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.inline-toggle {
+    background: transparent;
+    border: 1px solid #ddd;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.inline-toggle:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    transform: scale(1.1);
+}
+
+.privacy-indicator {
+    background: #ffc107;
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .privacy-control {
+        padding: 20px;
+    }
+    
+    .preview-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .privacy-actions {
+        flex-direction: column;
+    }
+    
+    .privacy-btn {
+        width: 100%;
+    }
+    
+    .contact-value-wrapper,
+    .item-company-wrapper {
+        flex-wrap: wrap;
+    }
+}

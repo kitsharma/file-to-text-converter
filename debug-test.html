@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <div id="status">Loading...</div>
+    <input type="file" id="testFileInput" accept=".pdf,.txt,.docx" />
+    <button onclick="testUpload()">Test Upload</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fast-levenshtein@3.0.0/levenshtein.min.js"></script>
+    
+    <script>
+        console.log('=== DEBUG TEST START ===');
+        
+        // Test basic loading
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            document.getElementById('status').textContent = 'DOM Ready';
+        });
+        
+        // Test script loading
+        const scripts = [
+            'config.js',
+            'onet-skill-mapper.js',
+            'enhanced-onet-mapper.js',
+            'skills-analysis-display.js',
+            'smart-redaction-service.js',
+            'government-data-service.js',
+            'skill-reframing-service.js',
+            'ai-job-matcher.js',
+            'onet-service.js',
+            'api-interceptor.js',
+            'pii-detector.js',
+            'resume-parser.js',
+            'enhanced-resume-parser.js',
+            'ux-enhanced-resume-display.js'
+        ];
+        
+        let loadedScripts = 0;
+        
+        scripts.forEach((script, index) => {
+            const scriptEl = document.createElement('script');
+            scriptEl.src = script;
+            scriptEl.onload = () => {
+                console.log(`✅ Loaded: ${script}`);
+                loadedScripts++;
+                document.getElementById('status').textContent = `Loaded ${loadedScripts}/${scripts.length} scripts`;
+                
+                if (loadedScripts === scripts.length) {
+                    console.log('All scripts loaded, testing FileConverter...');
+                    testFileConverter();
+                }
+            };
+            scriptEl.onerror = () => {
+                console.error(`❌ Failed to load: ${script}`);
+                document.getElementById('status').textContent = `Failed to load: ${script}`;
+            };
+            document.head.appendChild(scriptEl);
+        });
+        
+        function testFileConverter() {
+            try {
+                console.log('Creating FileConverter...');
+                window.testConverter = new FileConverter();
+                console.log('✅ FileConverter created successfully');
+                document.getElementById('status').textContent = 'FileConverter ready!';
+            } catch (error) {
+                console.error('❌ FileConverter creation failed:', error);
+                document.getElementById('status').textContent = `FileConverter failed: ${error.message}`;
+            }
+        }
+        
+        function testUpload() {
+            const fileInput = document.getElementById('testFileInput');
+            if (fileInput.files.length > 0 && window.testConverter) {
+                console.log('Testing file upload...');
+                window.testConverter.processFile(fileInput.files[0]);
+            } else {
+                console.log('No file selected or converter not ready');
+            }
+        }
+        
+        // Test if classes are available
+        window.addEventListener('load', () => {
+            console.log('=== CLASS AVAILABILITY TEST ===');
+            const classes = [
+                'FileConverter',
+                'EnhancedResumeParser', 
+                'ONETSkillMapper',
+                'SmartRedactionService',
+                'SkillsAnalysisDisplay',
+                'UXEnhancedResumeDisplay'
+            ];
+            
+            classes.forEach(className => {
+                if (window[className]) {
+                    console.log(`✅ ${className} available`);
+                } else {
+                    console.error(`❌ ${className} NOT available`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

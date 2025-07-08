@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Parser & Analyzer</title>
+    <title>Career Resilience Platform - Navigate AI-Driven Job Markets</title>
     <link rel="stylesheet" href="ux-styles.css">
     <link rel="stylesheet" href="skills-analysis-styles.css">
     <link rel="stylesheet" href="improved-ux-styles.css">
+    <link rel="stylesheet" href="privacy-control-styles.css">
+    <link rel="stylesheet" href="career-resilience-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <style>
@@ -1136,17 +1141,25 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="hero-section">
-            <h1 id="mainTitle">Turn Your Experience Into Your Next Opportunity</h1>
-            <p class="hero-subtext">Upload your resume for a 60-second career insight analysis</p>
+    <div class="career-resilience-main">
+        <div class="career-journey-header">
+            <h1 id="mainTitle">🌟 Your Career Resilience Journey</h1>
+            <p class="journey-subtitle">Transform your experience into competitive advantage in the AI-driven job market</p>
+            
+            <div class="career-progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-message">Ready to discover your career strengths</div>
             
             <div class="trust-signals">
-                <span class="trust-item">🔒 Private</span>
+                <span class="trust-item">🔒 Private & Secure</span>
+                <span class="trust-item">💻 Local Processing</span>
                 <span class="trust-item">📊 Real O*NET Data</span>
                 <span class="trust-item">⚡ 60 seconds</span>
             </div>
         </div>
+        
+        <div class="container">
         
         <div class="progress-steps" id="progressSteps">
             <div class="step active" id="step1">
@@ -1166,16 +1179,16 @@
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📄</div>
             <div class="upload-text" id="uploadText">Drop your resume here to discover your potential</div>
-            <div class="file-types" id="fileTypesText">Your data stays on your device - we never store or share anything</div>
+            <div class="file-types" id="fileTypesText">🔒 Your data stays on your device - we never store or share anything</div>
             <input type="file" id="fileInput" accept=".pdf,.txt,.docx" />
         </div>
         
         <!-- Hidden mode selector for advanced users -->
         <div class="advanced-options" style="display: none;">
             <button class="mode-btn" id="textModeBtn">Text Converter</button>
-            <button class="mode-btn active" id="resumeModeBtn">Resume Analyzer</button>
-            <button class="mode-btn" id="redactionModeBtn">PII Redaction</button>
-            <button class="mode-btn" id="careerModeBtn">Career Insights</button>
+            <button class="mode-btn active" id="resumeModeBtn">🌟 Career Resilience</button>
+            <button class="mode-btn" id="redactionModeBtn">🔒 Privacy Control</button>
+            <button class="mode-btn" id="careerModeBtn">🚀 AI-Proof Skills</button>
         </div>
 
         <div class="progress-container" id="progressContainer">
@@ -1205,7 +1218,7 @@
             <div class="result-text" id="resultText"></div>
         </div>
 
-        <div class="resume-analysis" id="resumeAnalysis">
+        <div class="resume-analysis" id="resumeAnalysis" style="display: none;">
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="overview">Overview</button>
                 <button class="tab-btn" data-tab="contact">Contact</button>
@@ -1218,8 +1231,8 @@
             <div class="tab-content active" id="overviewTab">
                 <div class="analysis-section">
                     <div class="analysis-title">
-                        Resume Quality Score
-                        <span class="score-badge" id="qualityScore">0/100</span>
+                        Resume Data Completeness
+                        <span class="score-badge" id="qualityScore">0% Complete</span>
                     </div>
                     <div id="summaryContent"></div>
                 </div>
@@ -1369,6 +1382,7 @@
     <script src="onet-skill-mapper.js"></script>
     <script src="enhanced-onet-mapper.js"></script>
     <script src="skills-analysis-display.js"></script>
+    <script src="smart-redaction-service.js"></script>
     <script src="government-data-service.js"></script>
     <script src="skill-reframing-service.js"></script>
     <script src="ai-job-matcher.js"></script>
@@ -1379,5 +1393,6 @@
     <script src="enhanced-resume-parser.js"></script>
     <script src="ux-enhanced-resume-display.js"></script>
     <script src="app.js"></script>
+    </div> <!-- /career-resilience-main -->
 </body>
 </html>

@@ -1,0 +1,27 @@
+John Smith
+Senior Software Engineer
+john.smith@email.com
+(555) 123-4567
+
+EXPERIENCE
+Senior Software Engineer
+Google Inc | 2020-2023
+• Led team of 5 developers in creating scalable microservices architecture
+• Implemented automated testing framework reducing bugs by 40%
+• Mentored junior developers and conducted code reviews
+• Collaborated with product managers to define technical requirements
+
+Software Developer
+Microsoft Corporation | 2018-2020
+• Developed user-facing features for Office 365 platform
+• Optimized database queries improving performance by 30%
+• Participated in agile development process
+• Created technical documentation for internal APIs
+
+EDUCATION
+Bachelor of Science in Computer Science
+Stanford University | 2018
+GPA: 3.8/4.0
+
+SKILLS
+JavaScript, Python, Java, React, Node.js, SQL, AWS, Docker, Git, Agile, Leadership, Problem Solving, Team Management

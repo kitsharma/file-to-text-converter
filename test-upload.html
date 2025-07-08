@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Test</title>
+    <style>
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px;
+        }
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Upload Test</h1>
+    <div class="upload-area" id="uploadArea">
+        <p>Click or drop file here</p>
+        <input type="file" id="fileInput" accept=".pdf,.txt,.docx" />
+    </div>
+    <div id="result"></div>
+
+    <script>
+        console.log('Test script loaded');
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const result = document.getElementById('result');
+        
+        if (!uploadArea || !fileInput) {
+            console.error('Elements not found!');
+        } else {
+            console.log('Elements found successfully');
+        }
+        
+        uploadArea.addEventListener('click', () => {
+            console.log('Upload area clicked');
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            console.log('File selected:', e.target.files[0]);
+            if (e.target.files[0]) {
+                result.innerHTML = `Selected: ${e.target.files[0].name}`;
+            }
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            console.log('Drag over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            console.log('File dropped:', e.dataTransfer.files[0]);
+            if (e.dataTransfer.files[0]) {
+                result.innerHTML = `Dropped: ${e.dataTransfer.files[0].name}`;
+            }
+        });
+    </script>
+</body>
+</html>
