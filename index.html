@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Parser & Analyzer</title>
     <link rel="stylesheet" href="ux-styles.css">
+    <link rel="stylesheet" href="skills-analysis-styles.css">
+    <link rel="stylesheet" href="improved-ux-styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <style>
@@ -1135,20 +1137,45 @@
 </head>
 <body>
     <div class="container">
-        <h1 id="mainTitle">Resume Parser & Analyzer</h1>
+        <div class="hero-section">
+            <h1 id="mainTitle">Turn Your Experience Into Your Next Opportunity</h1>
+            <p class="hero-subtext">Upload your resume for a 60-second career insight analysis</p>
+            
+            <div class="trust-signals">
+                <span class="trust-item">🔒 Private</span>
+                <span class="trust-item">📊 Real O*NET Data</span>
+                <span class="trust-item">⚡ 60 seconds</span>
+            </div>
+        </div>
         
-        <div class="mode-toggle">
-            <button class="mode-btn active" id="textModeBtn">Text Converter</button>
-            <button class="mode-btn" id="resumeModeBtn">Resume Analyzer</button>
-            <button class="mode-btn" id="redactionModeBtn">PII Redaction</button>
-            <button class="mode-btn" id="careerModeBtn">Career Insights</button>
+        <div class="progress-steps" id="progressSteps">
+            <div class="step active" id="step1">
+                <span class="step-number">1</span>
+                <span class="step-text">Share Your Story</span>
+            </div>
+            <div class="step" id="step2">
+                <span class="step-number">2</span>
+                <span class="step-text">Privacy Control</span>
+            </div>
+            <div class="step" id="step3">
+                <span class="step-number">3</span>
+                <span class="step-text">Career Insights</span>
+            </div>
         </div>
         
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📄</div>
-            <div class="upload-text" id="uploadText">Drop your file here or click to browse</div>
-            <div class="file-types" id="fileTypesText">Supports PDF, TXT, and MS Word (.docx) files</div>
+            <div class="upload-text" id="uploadText">Drop your resume here to discover your potential</div>
+            <div class="file-types" id="fileTypesText">Your data stays on your device - we never store or share anything</div>
             <input type="file" id="fileInput" accept=".pdf,.txt,.docx" />
+        </div>
+        
+        <!-- Hidden mode selector for advanced users -->
+        <div class="advanced-options" style="display: none;">
+            <button class="mode-btn" id="textModeBtn">Text Converter</button>
+            <button class="mode-btn active" id="resumeModeBtn">Resume Analyzer</button>
+            <button class="mode-btn" id="redactionModeBtn">PII Redaction</button>
+            <button class="mode-btn" id="careerModeBtn">Career Insights</button>
         </div>
 
         <div class="progress-container" id="progressContainer">
@@ -1337,7 +1364,11 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/fast-levenshtein@3.0.0/levenshtein.min.js"></script>
     <script src="config.js"></script>
+    <script src="onet-skill-mapper.js"></script>
+    <script src="enhanced-onet-mapper.js"></script>
+    <script src="skills-analysis-display.js"></script>
     <script src="government-data-service.js"></script>
     <script src="skill-reframing-service.js"></script>
     <script src="ai-job-matcher.js"></script>
