@@ -1,15 +1,25 @@
-# Career Resilience Platform
+# AI-Powered Career Transition Platform
 
-> AI-powered career resilience platform for navigating job market changes with intelligent resume analysis, skills mapping, and personalized career insights.
+> Navigate AI-driven job markets with intelligent resume analysis, PII redaction, and bias-aware career recommendations.
+
+## ✨ Current Features (Working)
+
+- ✅ **Resume Upload**: Single-click upload with PDF, DOCX, TXT support
+- ✅ **PII Redaction**: Privacy-first design with company name protection
+- ✅ **Work Experience Display**: Clean, accessible experience cards with expand/collapse
+- ✅ **Debug Console**: Full debugging system for development
+- ✅ **Responsive Design**: Mobile-first with WCAG 2.1 AA accessibility
 
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
-npm install
+# Set up Python environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install fastapi uvicorn
 
-# Start development server
-npm run dev
+# Start the server
+python main.py
 
 # Open browser to http://localhost:8000
 ```
@@ -32,80 +42,95 @@ npm run dev
 └── 📁 dev/                 # Development tools
 ```
 
-## 🛠️ Available Scripts
+## 📖 How to Use
 
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start development server |
-| `npm run dev` | Start development server (alias) |
-| `npm run build` | Build for production |
-| `npm test` | Run JavaScript tests |
-| `npm run test:python` | Run Python tests |
-| `npm run clean` | Clean build artifacts |
+1. **Upload Resume**: Drag and drop or click to upload your resume file
+2. **Privacy Control**: Toggle company name visibility with 👁️ redaction button
+3. **View Analysis**: Experience displays as clean cards with 2 achievements initially
+4. **Expand Details**: Click "Show more" to see additional achievements
+5. **Debug Mode**: Open browser console for detailed processing logs
 
-## 🎯 Core Features
+## 🎯 Working Features
 
-- **📄 Resume Analysis**: Upload and analyze PDF/DOCX resumes
-- **🔍 Skills Extraction**: AI-powered skills identification and mapping
-- **🎯 Job Matching**: Match skills to relevant job opportunities
-- **📊 Career Insights**: Personalized career development recommendations
-- **🔒 Privacy Protection**: Advanced PII redaction and privacy controls
-- **📈 Market Analysis**: Real-time job market trend analysis
+### 📄 Resume Processing
+- **File Support**: PDF, DOCX, TXT formats
+- **Smart Parsing**: Extracts skills, experience, education
+- **Progress Tracking**: Real-time processing status with document preview
+- **Single Upload**: Fixed double-upload issue
+
+### 🔒 Privacy Protection
+- **Company Redaction**: Shows "🔒 Company name protected for your privacy"
+- **Toggle Visibility**: Click 👁️ to show/hide company names
+- **Trust Building**: Clear messaging about data protection
+- **Local Processing**: No data transmitted to external servers
+
+### 💼 Experience Display
+- **Visual Hierarchy**: Company → Role → Achievements
+- **Cognitive Ease**: Shows 2 achievements initially, expandable
+- **Smooth Animations**: 300ms transitions for show/hide
+- **Consistent Formatting**: Standardized • bullet points
+- **Responsive Design**: Works on mobile, tablet, desktop
 
 ## 🏗️ Architecture
 
 ### Frontend
-- **Vanilla JavaScript ES2020+** with modular architecture
+- **Vanilla JavaScript ES2020+** with modular file handling
 - **CSS Grid & Flexbox** for responsive layouts
-- **Progressive Enhancement** for accessibility
+- **WCAG 2.1 AA accessibility** with full ARIA support
+- **Mobile-first design** with 44px touch targets
 
 ### Backend Services
-- **Python 3.9+** for data processing and AI services
-- **O*NET API** integration for occupational data
-- **BLS API** integration for labor statistics
+- **FastAPI** for robust API endpoints
+- **Python 3.8+** for data processing and AI services
+- **Static file serving** with optimized routing
 
 ### Key Technologies
-- **PDF.js** for PDF parsing
-- **Mammoth.js** for DOCX parsing
-- **Fast-Levenshtein** for string matching
-- **Government APIs** (O*NET, BLS) for career data
+- **PDF.js** for PDF document parsing
+- **Mammoth.js** for DOCX document parsing
+- **Debug Console** for development visibility
+- **Responsive CSS** with device-specific optimizations
 
 ## 🔧 Development
 
 ### Prerequisites
-- Node.js 18.0+
-- Python 3.9+
-- Modern web browser
+- Python 3.8+
+- Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ### Setup
 ```bash
 # Clone repository
-git clone <repository-url>
-cd career-resilience-platform
-
-# Install Node.js dependencies
-npm install
+git clone https://github.com/kitsharma/a-w-ai.git
+cd a-w-ai
 
 # Set up Python environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install fastapi uvicorn
 
-# Start development server
-npm run dev
+# Start the server
+python main.py
 ```
 
 ### Testing
 ```bash
-# Run all tests
-npm test
+# Run automated test suite
+./run-tests.sh
 
-# Run Python tests
-npm run test:python
+# Manual testing
+# 1. Open http://localhost:8000
+# 2. Upload public/test-charles.txt
+# 3. Verify features work as described
 
-# Run specific test file
-npx jest tests/unit/specific-test.js
+# Browser console verification
+# Open DevTools Console and run:
+# verifyExperienceImprovements()
 ```
+
+### API Endpoints
+- `GET /` - Main application interface
+- `GET /health` - Server health check
+- `POST /api/skills/analyze` - Analyze skills from resume
+- `POST /api/career/recommendations` - Get career recommendations
 
 ## 📖 Documentation
 
