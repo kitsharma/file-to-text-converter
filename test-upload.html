@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+    <h1>File Upload Debug Test</h1>
+    
+    <div id="uploadArea" style="border: 2px dashed #ccc; padding: 50px; text-align: center; margin: 20px 0; cursor: pointer;">
+        <p>Click to select file or drag & drop</p>
+        <input type="file" id="fileInput" accept=".pdf,.txt,.docx" style="display: none;">
+    </div>
+    
+    <div id="status" style="margin: 20px 0; padding: 10px; background: #f0f0f0;"></div>
+    
+    <div id="logs" style="background: #333; color: white; padding: 15px; max-height: 300px; overflow-y: auto; font-family: monospace;"></div>
+    
+    <script>
+        // Simple logger
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            logs.innerHTML += `[${timestamp}] ${message}<br>`;
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus(message, color = '#333') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.color = color;
+        }
+        
+        // Initialize
+        log('Test page loaded');
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        if (!uploadArea) {
+            log('ERROR: Upload area not found!');
+        } else {
+            log('Upload area found');
+        }
+        
+        if (!fileInput) {
+            log('ERROR: File input not found!');
+        } else {
+            log('File input found, accept: ' + fileInput.accept);
+        }
+        
+        // Click handler
+        uploadArea.addEventListener('click', () => {
+            log('Upload area clicked');
+            fileInput.click();
+        });
+        
+        // File change handler
+        fileInput.addEventListener('change', async (event) => {
+            log('File input changed');
+            const files = event.target.files;
+            log('Files selected: ' + files.length);
+            
+            if (files.length > 0) {
+                const file = files[0];
+                log('File details: ' + JSON.stringify({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                }));
+                
+                updateStatus('Processing: ' + file.name, 'blue');
+                
+                try {
+                    await processFile(file);
+                    updateStatus('Success: ' + file.name, 'green');
+                } catch (error) {
+                    log('ERROR processing file: ' + error.message);
+                    updateStatus('Error: ' + error.message, 'red');
+                }
+            }
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'blue';
+            log('Dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            log('Dragleave');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            log('Drop event');
+            
+            const files = e.dataTransfer.files;
+            log('Files dropped: ' + files.length);
+            
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+        
+        // File processing
+        async function processFile(file) {
+            const extension = file.name.toLowerCase().split('.').pop();
+            log('Processing file type: ' + extension);
+            
+            let content = '';
+            
+            if (extension === 'txt') {
+                content = await readTextFile(file);
+            } else if (extension === 'pdf') {
+                content = await readPDFFile(file);
+            } else if (extension === 'docx') {
+                content = await readDocxFile(file);
+            } else {
+                throw new Error('Unsupported file type: ' + extension);
+            }
+            
+            log('Content extracted, length: ' + content.length);
+            log('Content preview: ' + content.substring(0, 100) + '...');
+            
+            return content;
+        }
+        
+        function readTextFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read text file'));
+                reader.readAsText(file);
+            });
+        }
+        
+        async function readPDFFile(file) {
+            if (!window.pdfjsLib) {
+                throw new Error('PDF.js not loaded');
+            }
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+            }
+            
+            return fullText;
+        }
+        
+        async function readDocxFile(file) {
+            if (!window.mammoth) {
+                throw new Error('Mammoth not loaded');
+            }
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        }
+        
+        // Test libraries
+        log('Testing libraries...');
+        log('PDF.js available: ' + !!window.pdfjsLib);
+        log('Mammoth available: ' + !!window.mammoth);
+        
+        updateStatus('Ready for file upload');
+    </script>
+</body>
+</html>

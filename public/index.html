@@ -1183,6 +1183,35 @@
             <input type="file" id="fileInput" accept=".pdf,.txt,.docx" />
         </div>
         
+        <!-- Debug Panel -->
+        <div class="debug-panel" id="debugPanel" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #dc3545;">
+            <div class="debug-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #dc3545; margin: 0;">🐛 Debug Console</h3>
+                <div>
+                    <button id="runDiagnosticsBtn" class="debug-btn" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; margin-right: 10px;">Run Diagnostics</button>
+                    <button id="exportLogsBtn" class="debug-btn" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; margin-right: 10px;">Export Logs</button>
+                    <button id="clearDebugBtn" class="debug-btn" style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; margin-right: 10px;">Clear</button>
+                    <button id="toggleDebugBtn" class="debug-btn" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px;">Hide</button>
+                </div>
+            </div>
+            <div class="debug-status" style="margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div class="status-item">
+                        <strong>Backend Status:</strong> <span id="backendStatus" style="color: #ffc107;">Checking...</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>File Upload:</strong> <span id="uploadStatus" style="color: #6c757d;">Ready</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>API Client:</strong> <span id="apiClientStatus" style="color: #6c757d;">Initializing...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="debug-logs" style="background: #343a40; color: #fff; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85rem;" id="debugLogs">
+                <div class="debug-log-entry">[DEBUG] Debug panel initialized</div>
+            </div>
+        </div>
+
         <!-- Hidden mode selector for advanced users -->
         <div class="advanced-options" style="display: none;">
             <button class="mode-btn" id="textModeBtn">Text Converter</button>
@@ -1378,6 +1407,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/fast-levenshtein@3.0.0/levenshtein.min.js"></script>
+    
+    <!-- Debug Logger - Load first for comprehensive debugging -->
+    <script src="js/utils/debug-logger.js"></script>
+    
     <script src="../src/utils/config.js"></script>
     <script src="../src/components/onet-skill-mapper.js"></script>
     <script src="../src/components/enhanced-onet-mapper.js"></script>
@@ -1393,6 +1426,11 @@
     <script src="../src/parsers/enhanced-resume-parser.js"></script>
     <script src="../src/components/ux-enhanced-resume-display.js"></script>
     <script src="../src/components/app.js"></script>
+    
+    <!-- Career Insights Integration -->
+    <script src="js/components/career-api-client.js"></script>
+    <script src="js/components/career-insights-ui.js"></script>
+    <script src="js/main-app.js"></script>
     </div> <!-- /career-resilience-main -->
 </body>
 </html>
