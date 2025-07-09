@@ -1,31 +1,39 @@
-module.exports = {
-  preset: 'ts-jest',
+export default {
+  preset: 'ts-jest/presets/default-esm',
+  extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
-  testMatch: ['**/tests/**/*.test.ts'],
+  testMatch: ['**/tests/**/*.test.ts', '**/tests/**/*.test.js'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   moduleNameMapper: {
-    '^src/(.*)$': '<rootDir>/src/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@components/(.*)$': '<rootDir>/src/components/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@parsers/(.*)$': '<rootDir>/src/parsers/$1',
   },
-  // Enhanced coverage reporting to expose fraudulent claims
+  globals: {
+    'ts-jest': {
+      useESM: true
+    }
+  },
   collectCoverageFrom: [
-    'src/**/*.ts',
+    'src/**/*.{ts,js}',
     '!src/**/*.d.ts',
+    '!src/**/*.test.{ts,js}',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  // Set realistic coverage thresholds to prevent false claims
   coverageThreshold: {
     global: {
-      branches: 0, // Honest: currently 0% real branch coverage
-      functions: 0, // Honest: currently 0% real function coverage  
-      lines: 0, // Honest: currently 0% real line coverage
-      statements: 0 // Honest: currently 0% real statement coverage
+      branches: 0,
+      functions: 0,
+      lines: 0,
+      statements: 0
     }
   },
-  // Enable verbose reporting to show what's actually being tested
   verbose: true,
-  // Report on unused/untested code
   collectCoverage: true,
-  // Show individual test results
-  testResultsProcessor: undefined,
+  transform: {
+    '^.+\\.ts$': ['ts-jest', { useESM: true }]
+  },
 };
