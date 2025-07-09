@@ -1,13 +1,40 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "ES2020",
+    "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"],
+      "@parsers/*": ["src/parsers/*"]
+    },
     "types": ["jest", "node"],
-    "moduleResolution": "node"
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
-  "include": ["src", "tests"]
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "public/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "venv",
+    "dev/debug",
+    "dev/test-files"
+  ]
 }

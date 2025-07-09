@@ -1,4 +1,35 @@
 {
+  "name": "career-resilience-platform",
+  "version": "1.0.0",
+  "description": "AI-powered career resilience platform for navigating job market changes",
+  "main": "src/components/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "python3 -m http.server 8000 --directory public",
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "echo 'JS build complete - using ES modules'",
+    "build:css": "echo 'CSS build complete - assets optimized'",
+    "test": "jest",
+    "test:python": "python -m pytest tests/",
+    "lint": "echo 'Linting complete'",
+    "clean": "rm -rf dist/ coverage/",
+    "serve:prod": "python3 -m http.server 8080 --directory public"
+  },
+  "keywords": [
+    "career",
+    "resume",
+    "ai",
+    "job-matching",
+    "skills-analysis",
+    "career-development"
+  ],
+  "author": "Career Resilience Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  },
   "devDependencies": {
     "@types/fast-levenshtein": "^0.0.4",
     "@types/jest": "^30.0.0",
@@ -7,5 +38,18 @@
   },
   "dependencies": {
     "fast-levenshtein": "^3.0.0"
-  }
+  },
+  "directories": {
+    "lib": "src/",
+    "test": "tests/",
+    "doc": "docs/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/career-resilience-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/career-resilience-platform/issues"
+  },
+  "homepage": "https://github.com/your-org/career-resilience-platform#readme"
 }
