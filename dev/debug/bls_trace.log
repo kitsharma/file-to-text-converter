@@ -1,0 +1,406 @@
+== Info: Host api.bls.gov:443 was resolved.
+== Info: IPv6: (none)
+== Info: IPv4: 146.142.252.68
+== Info:   Trying 146.142.252.68:443...
+== Info: Connected to api.bls.gov (146.142.252.68) port 443
+== Info: ALPN: curl offers h2,http/1.1
+=> Send SSL data, 5 bytes (0x5)
+0000: .....
+== Info: TLSv1.3 (OUT), TLS handshake, Client hello (1):
+=> Send SSL data, 512 bytes (0x200)
+0000: .......M.*~M..r...I..;..O~.l..../QO.1w Z.3.....|.F...o.........F
+0040: .|)..`..>.......,.0.........+./...$.(.k.#.'.g.....9.....3.....=.
+0080: <.5./.....u.........api.bls.gov.................................
+00c0: ........h2.http/1.1.........1.....*.(...........................
+0100: ..............+........-.....3.&.$... M..f.........}...x..m...B9
+0140: .>.+............................................................
+0180: ................................................................
+01c0: ................................................................
+== Info:  CAfile: /etc/ssl/certs/ca-certificates.crt
+== Info:  CApath: /etc/ssl/certs
+<= Recv SSL data, 5 bytes (0x5)
+0000: ....[
+== Info: TLSv1.3 (IN), TLS handshake, Server hello (2):
+<= Recv SSL data, 91 bytes (0x5b)
+0000: ...W...K6..$.n).....T..#m.!.....]g..o. R.T.....:P....p.2.s.Z4...
+0040: A......./..................
+<= Recv SSL data, 5 bytes (0x5)
+0000: ....O
+== Info: TLSv1.2 (IN), TLS handshake, Certificate (11):
+<= Recv SSL data, 7247 bytes (0x1c4f)
+0000: ...K..H..@0..<0..$.......H..?.$.N...@...a0...*.H........0Q1.0...
+0040: U....US1.0...U....SSL Corporation1(0&..U....Entrust OV TLS Issui
+0080: ng RSA CA 10...250221213254Z..260228070806Z0..1.0...U....US1.0..
+00c0: .U....District of Columbia1.0...U....Washington1*0(..U...!United
+0100:  States Department of Labor1.0...U....*.bls.gov0.."0...*.H......
+0140: .......0.........Y...[...[..-..@n]j6Nv.B.Q...3rx0......dO]"a.;..
+0180: ..{s,_.u.......(.,.E......4........K@...J...WE..D.:f.!......3..d
+01c0: ..G.&..>~x.`...-....\.T .{|.?i..P...P.......\.w.z...4)P...r}..<.
+0200: ^....jk.e..Q @.}Y.E..*..*A.WFOsre...Y.i[..T....8.....3A..^8.cG..
+0240: ..i..9.c.4Q.x...+Z......fZN+zB......P~.H.@z.`F...(.Ka^ d.e..4.2.
+0280: ...=c8-9"d.x..r...N.L..Me=.p.0Q...J..*.4...b..7.3..g.uq4`f..~y.g
+02c0: 3.`..R.7......~(.`..`.J(.........5"..`.......,.;.%...W...k..Zl6.
+0300: ..bPg.?*-.[...I K..b....^....qk..E........iT...1z;....r..!./....
+0340: ..*.....q%...c...........0...0...U.......0.0...U.#..0...h.E.5...
+0380: ............0h..+........\0Z06..+.....0..*http://cert.ssl.com/En
+03c0: trust-OVTLS-I-R1.cer0 ..+.....0...http://ocsps.ssl.com0.....U...
+0400: ...0.....*.bls.gov..training.bls.gov..blscompdata.bls.gov..downl
+0440: oad.bls.gov..www.bls.gov..joltsdata.bls.gov..idcfbbs.bls.gov..id
+0480: cfoews.bls.gov..idcfars.bls.gov..idcf.bls.gov..cesdata.bls.gov."
+04c0: blsconfidentialitytraining.bls.gov..cpidata.bls.gov..data.bls.go
+0500: v..api.bls.gov0#..U. ..0.0...g.....0...+......0....0...U.%..0...
+0540: +.......0;..U...40200...,.*http://crls.ssl.com/Entrust-OVTLS-I-R
+0580: 1.crl0...U.........C.^...Q"..N).....0...U...........0..~..+.....
+05c0: y......n...j.h.v.d..l............O(...5'......}......*v.Y.....G0
+0600: E.!.............#$j....z....#.o..H... )u...........b.Myo.bvT.O..
+0640: S..;ig.w.....(.o...ox*M....-r1...]pA-%L......*v.:.....H0F.!....7
+0680: 6......&.Mpo..).V.Zs.&N.]W...!....=.{.:.c`{.p...F...y...m;-\s4..
+06c0: u..W.....>3.,........=q2%.!.%.a.N!....*v.......F0D. LC{.....p...
+0700: u.I.&..}...S&ue#VPM5. %.o.1Dj........h.P..4.*......~N.0...*.H...
+0740: ..........t..."......@.k.....zj.......".W."o...e.o.#h..+=...o...
+0780: ...Q:.B..>...{.B..H.....Ume..6..U.tfR......f..l..(....7.>/.&.G..
+07c0: ~.....(...".'.8..)....H#>8..b.}.....>;..{M...C....j........b..M.
+0800: ..[......YY.H.....w.e.s.=V..bQ^...d..........'.-.......\.y...#..
+0840: XA<.7.....6..n...j_.wh..!q<..'O.....&.K.s.L.-...m/.v.H%.B.X..7..
+0880: ...l.\yT.....'...@.,.FG..Q.......;....d.Q....<c..'.+..|...K.5...
+08c0: ...5...RU.h...iSX..g/.p.3....(T.m^\.nU.N...^..sX8k...xq.ec..<..?
+0900: (.c........$.&.U'..l.0.P.z.../..!i?. ...7.y...u......."..<......
+0940: .~.v.1...(..Z0..V0..>.......o.>._..:.mz..:.m0...*.H........0N1.0
+0980: ...U....US1.0...U....SSL Corporation1%0#..U....SSL.com TLS RSA R
+09c0: oot CA 20220...240822175338Z..270822175337Z0Q1.0...U....US1.0...
+0a00: U....SSL Corporation1(0&..U....Entrust OV TLS Issuing RSA CA 10.
+0a40: ."0...*.H.............0.............0..y.n5..i.3..Pw.z.D........
+0a80: r0..b..lE....~..f.c..!."1+..0.6.......i0.a#.!.f.L........l.....}
+0ac0: B7._..E...A.M@.gF...+7,.....:Lx3...[..@..Ku..3..d.W...l..L.=.a..
+0b00: y.UA..tV......=....h?".....Z)c\....}..V~z.%..........F.<....P~..
+0b40: ..u...[9R.TtD..nX..].....Ss{.]X.;......w....j...%W.N...c.w...f.c
+0b80: ....O..id...}<&.......\...Q........eX..........V.[...=...TGyV`5.
+0bc0: .....9.h@.5....U...Bt..>../` ......h....s........].{.Ki.tZ."iJ.Z
+0c00: _h<./..]$..{.G..z RX..3..O..1.tdh6...eK.6.4.....,.....B.UT)m.,..
+0c40: ..H.BIj..q&.H1...q.9..}F...1...........+0..'0...U.......0.......
+0c80: 0...U.#..0.....7...z'...5.3|..DB.0L..+........@0>0<..+.....0..0h
+0cc0: ttp://cert.ssl.com/SSLcom-TLS-Root-2022-RSA.cer0...U. ..0.0...U.
+0d00:  .0...U.%..0...+.........+.......0A..U...:0806.4.2.0http://crls.
+0d40: ssl.com/SSLcom-TLS-Root-2022-RSA.crl0...U......h.E.5............
+0d80: ...0...U...........0...*.H..............]z....d...|.<0u._.X@....
+0dc0: .}.y.C.t.LD.....C.G.&8..0.....`......2c.E9NB.....m~L.....D..Nw.A
+0e00:  .*K...^..-KPJm........8M.(..XG.?.Y......j....../T|4..m..<E../M2
+0e40: "0.t.&..Ap*..+...~.........X.h..lp..2.,.:0G..S]b.SRlb....M..w.P}
+0e80: *..$..@^w.h.....D....O@[..Y{Bh...(k0;.........#.kR...b..'... g..
+0ec0: ..T%...3....VO*..|...:..H..x..u.P..5.W:........j...&...z...T].L.
+0f00: K...../...!.-$.6Fd..w......>.F...0.uB...&...wj...ZK|.p....t.....
+0f40: ...b).qi.,...;........n.KM.........h....h+.C\.g..!.....E,.G}.Z.b
+0f80: ....k#.,=...<L?....e.....uP.....*..5.'....0...0..........2od.p4.
+0fc0: ...jP....0...*.H........0..1.0...U....US1.0...U....Texas1.0...U.
+1000: ...Houston1.0...U....SSL Corporation1705..U....SSL.com EV Root C
+1040: ertification Authority RSA R20...231107172544Z..381103172543Z0N1
+1080: .0...U....US1.0...U....SSL Corporation1%0#..U....SSL.com TLS RSA
+10c0:  Root CA 20220.."0...*.H.............0...........rO@..a>5#...t./
+1100: {X=.<..(./...H...%.L..L.sP."Jc...)n...>&..........6......;R.G.]t
+1140: .df.].h........@#.....Q..9...).K.{-.9..b..{A.....r.....9.t..4Y.W
+1180: ..[.$.1s0......>|D_..... i..P..U...rvnLG.uUY.St...A.X.1f....)@N/
+11c0: .{..,-..........I...n.4....... ......NH{Q...\i7Gf.h..(......ZO.R
+1200: p..E...N.....R'mny...{...L.....v.AS.3.Z8B...>A.v.2....Ng..Bu#n..
+1240: B..U.S..;.3X.R.......;.8...............i.P6.\...At.c.7....K....w
+1280: ..4{...f.........6DM.Q....j...t.%.@Qn..Q@....*...#........z.{'..
+12c0: ..F$..KcK......+.....R...g.m.-..2.g2.H.?.%..%/........R0..N0...U
+1300: .......0....0...U.#..0....`....4.....%.s.Fi..0r..+........f0d0@.
+1340: .+.....0..4http://cert.ssl.com/SSLcom-RootCA-EV-RSA-4096-R2.cer0
+1380:  ..+.....0...http://ocsps.ssl.com0...U. ..0.0...U. .0...U.%..0..
+13c0: .+.........+.......0E..U...>0<0:.8.6.4http://crls.ssl.com/SSLcom
+1400: -RootCA-EV-RSA-4096-R2.crl0...U........7...z'...5.3|..DB.0...U..
+1440: .........0...*.H...............<.B^...w..o...m.}.Y........(#.Wh8
+1480: }...I......S.vL2.....Z......K...DE...-.Au.r.g...D.CrF.E`......m_
+14c0: ....A@..@..qNUI.....>......../]~.........|.t....3..:..v.B.<.D/..
+1500: ......&.\.}......5..w..g......b.......%..>..N..7z....Q..n.1g..8.
+1540: .=IA.3$./ .6.b.........BM......4..b)....f4mvQ..$.h..r..'.i".z.R.
+1580: ........#..yh.H..z..y..pV.W....\V.;......)..4...S.,E.......... >
+15c0: &DYv wE....3k..G...ea..N.\C..P....@Q._.^.&.U.a.}M6.s..`.b......)
+1600: .{+.....n.'9..]....=....J8V/h....rFLIEf..w.W?.k.........1.@.l...
+1640: ....4.W*..\_W(.]....ypz._.......0...0..........V.).4.x.0...*.H..
+1680: ......0..1.0...U....US1.0...U....Texas1.0...U....Houston1.0...U.
+16c0: ...SSL Corporation1705..U....SSL.com EV Root Certification Autho
+1700: rity RSA R20...170531181437Z..420530181437Z0..1.0...U....US1.0..
+1740: .U....Texas1.0...U....Houston1.0...U....SSL Corporation1705..U..
+1780: ..SSL.com EV Root Certification Authority RSA R20.."0...*.H.....
+17c0: ........0.........6e@..M....F.k.3G.L.}}..-=..x......Wh.W>...A..(
+1800: A$..r.....^p#...9...N..m&.{...'.....7...qq....c......g..U...I..Z
+1840: ...o2...;.A......m{...Lr..+...<T.g...].....r...}.'.....[.;......
+1880: ..[z~..<8v.b..9^.w.].Y.f,>....&.i.......K.@.P......."...7...M.k!
+18c0: ..."..F.Di..a5..o.a........`.M....f.WX...i.....G.f.v.w}4$.......
+1900: ..!,.x.d.....x.U...2.x...a...S...........w.L....=b..8..f..YvZS..
+1940: ...+hD{.y.3Jv.[........{^b....c....I.(....4...Un.....U;#."..)f&.
+1980:  Pw.J.....`pA^..P9".&..;stUG.y.9.0.D......%B..S.......<....J.g..
+19c0: 0..,....Wf..\.V.w......c0a0...U.......0....0...U.#..0....`....4.
+1a00: ....%.s.Fi..0...U.......`....4.....%.s.Fi..0...U...........0...*
+1a40: .H.............V.....I......f..Q.u..P,z.......>..).c....T...../.
+1a80: Jm.^.W..U...G.6..j..u.G%...c.h-U........<^.x... p.....r.."..3%F.
+1ac0: d.&.>.c....=......}......QP..............h.9&..h.....zg=bg.%.r..
+1b00: .....K+<...@.8T...h....Q<...........r.....x.....C..e9(........e.
+1b40: ._et<..5.{.....].m.:V..;.../".F.F<..L.D.^.\.f..&)..Ra..s.....lj.
+1b80: ?..@....Y.._La.m.;....".ggD.....A.f.Z.}#...........?......;e..l.
+1bc0: .b.....%.4.owv.........tbH.w.i.a....tT.........Cu.S.z....6....."
+1c00: K..P%.........N5M......f,D...'....0..q.n......-;..q.T..`..KfO...
+1c40:  ....W.Ec..v...
+<= Recv SSL data, 5 bytes (0x5)
+0000: ....m
+== Info: TLSv1.2 (IN), TLS handshake, Server key exchange (12):
+<= Recv SSL data, 621 bytes (0x26d)
+0000: ...i...a.^.fmz...{2-....+.$`+....&=e...V..|.....G...l.=.......R.
+0040: ......G...Ec..b&...Q...&..!.fK..z...Wr........X1.)....C..W..|...
+0080: S..].....z..U.|.FU[<..)...B.....JX......6`5).....r...U._.,.7..;.
+00c0: ....eH.....V..p...F..WAV(4..=.C%u..<G......|.d....@...{6.*...'..
+0100: ]......".h.....n..p8x......d...S.Y_.."....V.......-.s...\..g.!.4
+0140: .s%..w/LQer...5.r....k.z*....9..u+]..ul......Q.......(.....lQ.Y]
+0180: }..G...h...T......v..w........c_.A..8.....n/.....~j .a....:.q...
+01c0: .K1.z..C..7.?Em.7.W.....s..lcK.W..|......0.."..B.....iE.=..z. R.
+0200: ,....`.U.3..SZ...uy.......C......(..&h.j..w.t...8.YE.$o..O......
+0240: ...K...........Ph2....T."...y@...uC.1.....1.>
+<= Recv SSL data, 5 bytes (0x5)
+0000: .....
+== Info: TLSv1.2 (IN), TLS handshake, Server finished (14):
+<= Recv SSL data, 4 bytes (0x4)
+0000: ....
+=> Send SSL data, 5 bytes (0x5)
+0000: ....f
+== Info: TLSv1.2 (OUT), TLS handshake, Client key exchange (16):
+=> Send SSL data, 102 bytes (0x66)
+0000: ...ba....B`...`%-.zA..L.&E...X?h....0.G`B..%.."U.........ye=.t.H
+0040: .P!..An6s}C.}..A.^R...U..F...64..8.R6<
+=> Send SSL data, 5 bytes (0x5)
+0000: .....
+== Info: TLSv1.2 (OUT), TLS change cipher, Change cipher spec (1):
+=> Send SSL data, 1 bytes (0x1)
+0000: .
+=> Send SSL data, 5 bytes (0x5)
+0000: ....(
+== Info: TLSv1.2 (OUT), TLS handshake, Finished (20):
+=> Send SSL data, 16 bytes (0x10)
+0000: ....Y[.a..4+j.<z
+<= Recv SSL data, 5 bytes (0x5)
+0000: .....
+<= Recv SSL data, 5 bytes (0x5)
+0000: ....(
+== Info: TLSv1.2 (IN), TLS handshake, Finished (20):
+<= Recv SSL data, 16 bytes (0x10)
+0000: .....,Tp...?.T.[
+== Info: SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256 / secp384r1 / rsaEncryption
+== Info: ALPN: server did not agree on a protocol. Uses default.
+== Info: Server certificate:
+== Info:  subject: C=US; ST=District of Columbia; L=Washington; O=United States Department of Labor; CN=*.bls.gov
+== Info:  start date: Feb 21 21:32:54 2025 GMT
+== Info:  expire date: Feb 28 07:08:06 2026 GMT
+== Info:  subjectAltName: host "api.bls.gov" matched cert's "*.bls.gov"
+== Info:  issuer: C=US; O=SSL Corporation; CN=Entrust OV TLS Issuing RSA CA 1
+== Info:  SSL certificate verify ok.
+== Info:   Certificate level 0: Public key type RSA (4096/152 Bits/secBits), signed using sha256WithRSAEncryption
+== Info:   Certificate level 1: Public key type RSA (4096/152 Bits/secBits), signed using sha256WithRSAEncryption
+== Info:   Certificate level 2: Public key type RSA (4096/152 Bits/secBits), signed using sha256WithRSAEncryption
+== Info: using HTTP/1.x
+=> Send SSL data, 5 bytes (0x5)
+0000: ....g
+=> Send header, 181 bytes (0xb5)
+0000: POST /publicAPI/v2/timeseries/data/ HTTP/1.1
+002e: Host: api.bls.gov
+0041: Content-Type: application/json
+0061: Accept: application/json
+007b: User-Agent: CareerAI-Platform/1.0
+009e: Content-Length: 154
+00b3: 
+=> Send data, 154 bytes (0x9a)
+0000: {.      "seriesid": ["CES0000000001", "LNS14000000", "CUUR0000SA
+0040: 0"],.      "startyear": "2022",.      "endyear": "2024",.      "
+0080: registrationkey": "".    }
+<= Recv SSL data, 5 bytes (0x5)
+0000: ...(,
+<= Recv header, 18 bytes (0x12)
+0000: HTTP/1.1 200 200
+<= Recv header, 37 bytes (0x25)
+0000: Date: Wed, 09 Jul 2025 16:02:57 GMT
+<= Recv header, 32 bytes (0x20)
+0000: Content-Type: application/json
+<= Recv header, 31 bytes (0x1f)
+0000: Vary: Origin, Accept-Encoding
+<= Recv header, 23 bytes (0x17)
+0000: APC-Route-id: _01_05v
+<= Recv header, 136 bytes (0x88)
+0000: Access-Control-Allow-Headers: origin,x-requested-with,access-con
+0040: trol-request-headers,content-type,access-control-request-method,
+0080: accept
+<= Recv header, 32 bytes (0x20)
+0000: Access-Control-Allow-Origin: *
+<= Recv header, 21 bytes (0x15)
+0000: Route-Id: _t8_06v; 
+<= Recv header, 28 bytes (0x1c)
+0000: Transfer-Encoding: chunked
+<= Recv header, 17 bytes (0x11)
+0000: Pool-Info: AP01
+<= Recv header, 49 bytes (0x31)
+0000: X-Frame-Options: ALLOW-FROM https://www.bls.gov
+<= Recv header, 60 bytes (0x3c)
+0000: Content-Security-Policy: frame-ancestors https://*.bls.gov
+<= Recv header, 41 bytes (0x29)
+0000: Cross-Origin-Opener-Policy: same-origin
+<= Recv header, 73 bytes (0x49)
+0000: Strict-Transport-Security: max-age=31536000; includeSubDomains; 
+0040: Preload
+<= Recv header, 103 bytes (0x67)
+0000: Set-Cookie: JSESSIONID=3EB2B2593B4A2D062938044FFDB1968A; Path=/p
+0040: ublicAPI; Version=1; Secure; Httponly
+<= Recv header, 2 bytes (0x2)
+0000: 
+<= Recv data, 8184 bytes (0x1ff8)
+0000: {"status":"REQUEST_SUCCEEDED","responseTime":100,"message":[],"R
+0040: esults":{."series":.[{"seriesID":"CES0000000001","data":[{"year"
+0080: :"2024","period":"M12","periodName":"December","value":"158942",
+00c0: "footnotes":[{}]},{"year":"2024","period":"M11","periodName":"No
+0100: vember","value":"158619","footnotes":[{}]},{"year":"2024","perio
+0140: d":"M10","periodName":"October","value":"158358","footnotes":[{}
+0180: ]},{"year":"2024","period":"M09","periodName":"September","value
+01c0: ":"158314","footnotes":[{}]},{"year":"2024","period":"M08","peri
+0200: odName":"August","value":"158074","footnotes":[{}]},{"year":"202
+0240: 4","period":"M07","periodName":"July","value":"158003","footnote
+0280: s":[{}]},{"year":"2024","period":"M06","periodName":"June","valu
+02c0: e":"157915","footnotes":[{}]},{"year":"2024","period":"M05","per
+0300: iodName":"May","value":"157828","footnotes":[{}]},{"year":"2024"
+0340: ,"period":"M04","periodName":"April","value":"157635","footnotes
+0380: ":[{}]},{"year":"2024","period":"M03","periodName":"March","valu
+03c0: e":"157517","footnotes":[{}]},{"year":"2024","period":"M02","per
+0400: iodName":"February","value":"157271","footnotes":[{}]},{"year":"
+0440: 2024","period":"M01","periodName":"January","value":"157049","fo
+0480: otnotes":[{}]},{"year":"2023","period":"M12","periodName":"Decem
+04c0: ber","value":"156930","footnotes":[{}]},{"year":"2023","period":
+0500: "M11","periodName":"November","value":"156661","footnotes":[{}]}
+0540: ,{"year":"2023","period":"M10","periodName":"October","value":"1
+0580: 56520","footnotes":[{}]},{"year":"2023","period":"M09","periodNa
+05c0: me":"September","value":"156334","footnotes":[{}]},{"year":"2023
+0600: ","period":"M08","periodName":"August","value":"156176","footnot
+0640: es":[{}]},{"year":"2023","period":"M07","periodName":"July","val
+0680: ue":"156019","footnotes":[{}]},{"year":"2023","period":"M06","pe
+06c0: riodName":"June","value":"155871","footnotes":[{}]},{"year":"202
+0700: 3","period":"M05","periodName":"May","value":"155614","footnotes
+0740: ":[{}]},{"year":"2023","period":"M04","periodName":"April","valu
+0780: e":"155387","footnotes":[{}]},{"year":"2023","period":"M03","per
+07c0: iodName":"March","value":"155171","footnotes":[{}]},{"year":"202
+0800: 3","period":"M02","periodName":"February","value":"155086","foot
+0840: notes":[{}]},{"year":"2023","period":"M01","periodName":"January
+0880: ","value":"154780","footnotes":[{}]},{"year":"2022","period":"M1
+08c0: 2","periodName":"December","value":"154336","footnotes":[{}]},{"
+0900: year":"2022","period":"M11","periodName":"November","value":"154
+0940: 210","footnotes":[{}]},{"year":"2022","period":"M10","periodName
+0980: ":"October","value":"153913","footnotes":[{}]},{"year":"2022","p
+09c0: eriod":"M09","periodName":"September","value":"153513","footnote
+0a00: s":[{}]},{"year":"2022","period":"M08","periodName":"August","va
+0a40: lue":"153286","footnotes":[{}]},{"year":"2022","period":"M07","p
+0a80: eriodName":"July","value":"153049","footnotes":[{}]},{"year":"20
+0ac0: 22","period":"M06","periodName":"June","value":"152353","footnot
+0b00: es":[{}]},{"year":"2022","period":"M05","periodName":"May","valu
+0b40: e":"151892","footnotes":[{}]},{"year":"2022","period":"M04","per
+0b80: iodName":"April","value":"151651","footnotes":[{}]},{"year":"202
+0bc0: 2","period":"M03","periodName":"March","value":"151346","footnot
+0c00: es":[{}]},{"year":"2022","period":"M02","periodName":"February",
+0c40: "value":"150875","footnotes":[{}]},{"year":"2022","period":"M01"
+0c80: ,"periodName":"January","value":"150006","footnotes":[{}]}]},.{"
+0cc0: seriesID":"LNS14000000","data":[{"year":"2024","period":"M12","p
+0d00: eriodName":"December","value":"4.1","footnotes":[{}]},{"year":"2
+0d40: 024","period":"M11","periodName":"November","value":"4.2","footn
+0d80: otes":[{}]},{"year":"2024","period":"M10","periodName":"October"
+0dc0: ,"value":"4.1","footnotes":[{}]},{"year":"2024","period":"M09","
+0e00: periodName":"September","value":"4.1","footnotes":[{}]},{"year":
+0e40: "2024","period":"M08","periodName":"August","value":"4.2","footn
+0e80: otes":[{}]},{"year":"2024","period":"M07","periodName":"July","v
+0ec0: alue":"4.2","footnotes":[{}]},{"year":"2024","period":"M06","per
+0f00: iodName":"June","value":"4.1","footnotes":[{}]},{"year":"2024","
+0f40: period":"M05","periodName":"May","value":"4.0","footnotes":[{}]}
+0f80: ,{"year":"2024","period":"M04","periodName":"April","value":"3.9
+0fc0: ","footnotes":[{}]},{"year":"2024","period":"M03","periodName":"
+1000: March","value":"3.9","footnotes":[{}]},{"year":"2024","period":"
+1040: M02","periodName":"February","value":"3.9","footnotes":[{}]},{"y
+1080: ear":"2024","period":"M01","periodName":"January","value":"3.7",
+10c0: "footnotes":[{}]},{"year":"2023","period":"M12","periodName":"De
+1100: cember","value":"3.8","footnotes":[{}]},{"year":"2023","period":
+1140: "M11","periodName":"November","value":"3.7","footnotes":[{}]},{"
+1180: year":"2023","period":"M10","periodName":"October","value":"3.9"
+11c0: ,"footnotes":[{}]},{"year":"2023","period":"M09","periodName":"S
+1200: eptember","value":"3.8","footnotes":[{}]},{"year":"2023","period
+1240: ":"M08","periodName":"August","value":"3.7","footnotes":[{}]},{"
+1280: year":"2023","period":"M07","periodName":"July","value":"3.5","f
+12c0: ootnotes":[{}]},{"year":"2023","period":"M06","periodName":"June
+1300: ","value":"3.6","footnotes":[{}]},{"year":"2023","period":"M05",
+1340: "periodName":"May","value":"3.6","footnotes":[{}]},{"year":"2023
+1380: ","period":"M04","periodName":"April","value":"3.4","footnotes":
+13c0: [{}]},{"year":"2023","period":"M03","periodName":"March","value"
+1400: :"3.5","footnotes":[{}]},{"year":"2023","period":"M02","periodNa
+1440: me":"February","value":"3.6","footnotes":[{}]},{"year":"2023","p
+1480: eriod":"M01","periodName":"January","value":"3.5","footnotes":[{
+14c0: }]},{"year":"2022","period":"M12","periodName":"December","value
+1500: ":"3.5","footnotes":[{}]},{"year":"2022","period":"M11","periodN
+1540: ame":"November","value":"3.6","footnotes":[{}]},{"year":"2022","
+1580: period":"M10","periodName":"October","value":"3.6","footnotes":[
+15c0: {}]},{"year":"2022","period":"M09","periodName":"September","val
+1600: ue":"3.5","footnotes":[{}]},{"year":"2022","period":"M08","perio
+1640: dName":"August","value":"3.6","footnotes":[{}]},{"year":"2022","
+1680: period":"M07","periodName":"July","value":"3.5","footnotes":[{}]
+16c0: },{"year":"2022","period":"M06","periodName":"June","value":"3.6
+1700: ","footnotes":[{}]},{"year":"2022","period":"M05","periodName":"
+1740: May","value":"3.6","footnotes":[{}]},{"year":"2022","period":"M0
+1780: 4","periodName":"April","value":"3.7","footnotes":[{}]},{"year":
+17c0: "2022","period":"M03","periodName":"March","value":"3.7","footno
+1800: tes":[{}]},{"year":"2022","period":"M02","periodName":"February"
+1840: ,"value":"3.8","footnotes":[{}]},{"year":"2022","period":"M01","
+1880: periodName":"January","value":"4.0","footnotes":[{}]}]},.{"serie
+18c0: sID":"CUUR0000SA0","data":[{"year":"2024","period":"M12","period
+1900: Name":"December","value":"315.605","footnotes":[{}]},{"year":"20
+1940: 24","period":"M11","periodName":"November","value":"315.493","fo
+1980: otnotes":[{}]},{"year":"2024","period":"M10","periodName":"Octob
+19c0: er","value":"315.664","footnotes":[{}]},{"year":"2024","period":
+1a00: "M09","periodName":"September","value":"315.301","footnotes":[{}
+1a40: ]},{"year":"2024","period":"M08","periodName":"August","value":"
+1a80: 314.796","footnotes":[{}]},{"year":"2024","period":"M07","period
+1ac0: Name":"July","value":"314.540","footnotes":[{}]},{"year":"2024",
+1b00: "period":"M06","periodName":"June","value":"314.175","footnotes"
+1b40: :[{}]},{"year":"2024","period":"M05","periodName":"May","value":
+1b80: "314.069","footnotes":[{}]},{"year":"2024","period":"M04","perio
+1bc0: dName":"April","value":"313.548","footnotes":[{}]},{"year":"2024
+1c00: ","period":"M03","periodName":"March","value":"312.332","footnot
+1c40: es":[{}]},{"year":"2024","period":"M02","periodName":"February",
+1c80: "value":"310.326","footnotes":[{}]},{"year":"2024","period":"M01
+1cc0: ","periodName":"January","value":"308.417","footnotes":[{}]},{"y
+1d00: ear":"2023","period":"M12","periodName":"December","value":"306.
+1d40: 746","footnotes":[{}]},{"year":"2023","period":"M11","periodName
+1d80: ":"November","value":"307.051","footnotes":[{}]},{"year":"2023",
+1dc0: "period":"M10","periodName":"October","value":"307.671","footnot
+1e00: es":[{}]},{"year":"2023","period":"M09","periodName":"September"
+1e40: ,"value":"307.789","footnotes":[{}]},{"year":"2023","period":"M0
+1e80: 8","periodName":"August","value":"307.026","footnotes":[{}]},{"y
+1ec0: ear":"2023","period":"M07","periodName":"July","value":"305.691"
+1f00: ,"footnotes":[{}]},{"year":"2023","period":"M06","periodName":"J
+1f40: une","value":"305.109","footnotes":[{}]},{"year":"2023","period"
+1f80: :"M05","periodName":"May","value":"304.127","footnotes":[{}]},{"
+1fc0: year":"2023","period":"M04","periodName":"April","value"
+<= Recv data, 1358 bytes (0x54e)
+0000: :"303.363","footnotes":[{}]},{"year":"2023","period":"M03","peri
+0040: odName":"March","value":"301.836","footnotes":[{}]},{"year":"202
+0080: 3","period":"M02","periodName":"February","value":"300.840","foo
+00c0: tnotes":[{}]},{"year":"2023","period":"M01","periodName":"Januar
+0100: y","value":"299.170","footnotes":[{}]},{"year":"2022","period":"
+0140: M12","periodName":"December","value":"296.797","footnotes":[{}]}
+0180: ,{"year":"2022","period":"M11","periodName":"November","value":"
+01c0: 297.711","footnotes":[{}]},{"year":"2022","period":"M10","period
+0200: Name":"October","value":"298.012","footnotes":[{}]},{"year":"202
+0240: 2","period":"M09","periodName":"September","value":"296.808","fo
+0280: otnotes":[{}]},{"year":"2022","period":"M08","periodName":"Augus
+02c0: t","value":"296.171","footnotes":[{}]},{"year":"2022","period":"
+0300: M07","periodName":"July","value":"296.276","footnotes":[{}]},{"y
+0340: ear":"2022","period":"M06","periodName":"June","value":"296.311"
+0380: ,"footnotes":[{}]},{"year":"2022","period":"M05","periodName":"M
+03c0: ay","value":"292.296","footnotes":[{}]},{"year":"2022","period":
+0400: "M04","periodName":"April","value":"289.109","footnotes":[{}]},{
+0440: "year":"2022","period":"M03","periodName":"March","value":"287.5
+0480: 04","footnotes":[{}]},{"year":"2022","period":"M02","periodName"
+04c0: :"February","value":"283.716","footnotes":[{}]},{"year":"2022","
+0500: period":"M01","periodName":"January","value":"281.148","footnote
+0540: s":[{}]}]}].}}
+<= Recv SSL data, 5 bytes (0x5)
+0000: .....
+== Info: Connection #0 to host api.bls.gov left intact

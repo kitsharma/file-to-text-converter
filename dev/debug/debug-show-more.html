@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Show More/Less Logic Test</title>
+    <style>
+        .achievement-item.achievement-hidden { display: none; }
+        .experience-card { border: 1px solid #ccc; margin: 10px; padding: 10px; }
+        .show-more-btn { background: blue; color: white; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>Show More/Less Button Logic Test</h1>
+    
+    <!-- Test Case: Experience with 5 items (should show "Show 2 more") -->
+    <div class="experience-card">
+        <h3>Test Experience (5 items)</h3>
+        <ul class="experience-achievements">
+            <li class="achievement-item" data-index="0">Item 1 (visible)</li>
+            <li class="achievement-item" data-index="1">Item 2 (visible)</li>
+            <li class="achievement-item" data-index="2">Item 3 (visible)</li>
+            <li class="achievement-item achievement-hidden" data-index="3">Item 4 (hidden initially)</li>
+            <li class="achievement-item achievement-hidden" data-index="4">Item 5 (hidden initially)</li>
+        </ul>
+        <button class="show-more-btn" onclick="testToggle(this)">Show 2 more</button>
+    </div>
+
+    <!-- Test Case: Experience with 2 items (no button should appear) -->
+    <div class="experience-card">
+        <h3>Test Experience (2 items - no button)</h3>
+        <ul class="experience-achievements">
+            <li class="achievement-item" data-index="0">Item 1</li>
+            <li class="achievement-item" data-index="1">Item 2</li>
+        </ul>
+        <!-- No button should be here -->
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+        function log(message) {
+            document.getElementById('log').innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+
+        function testToggle(button) {
+            log('=== TESTING TOGGLE FUNCTION ===');
+            
+            const experienceCard = button.closest('.experience-card');
+            log('Found experience card: ' + (experienceCard ? 'YES' : 'NO'));
+            
+            const allItems = experienceCard.querySelectorAll('.achievement-item');
+            log('Total items found: ' + allItems.length);
+            
+            const isExpanded = button.dataset.expanded === 'true';
+            log('Current expanded state: ' + isExpanded);
+            
+            // Count items that should be hidden (index 3+)
+            let hiddenCount = 0;
+            allItems.forEach((item, index) => {
+                log('Processing item ' + index + ': ' + item.textContent);
+                if (index >= 3) {
+                    hiddenCount++;
+                    if (isExpanded) {
+                        item.classList.add('achievement-hidden');
+                        log('  -> HIDING item ' + index);
+                    } else {
+                        item.classList.remove('achievement-hidden');
+                        log('  -> SHOWING item ' + index);
+                    }
+                }
+            });
+            
+            log('Hidden count: ' + hiddenCount);
+            
+            button.dataset.expanded = !isExpanded;
+            button.textContent = isExpanded ? `Show ${hiddenCount} more` : 'Show less';
+            
+            log('New button text: ' + button.textContent);
+            log('New expanded state: ' + button.dataset.expanded);
+            log('=== TEST COMPLETE ===\n');
+        }
+
+        // Test the logic on page load
+        window.onload = function() {
+            log('Page loaded. Testing initial state...');
+            
+            const buttons = document.querySelectorAll('.show-more-btn');
+            log('Found ' + buttons.length + ' show-more buttons');
+            
+            const hiddenItems = document.querySelectorAll('.achievement-hidden');
+            log('Found ' + hiddenItems.length + ' initially hidden items');
+            
+            log('Ready for manual testing. Click the blue button above.');
+        };
+    </script>
+</body>
+</html>

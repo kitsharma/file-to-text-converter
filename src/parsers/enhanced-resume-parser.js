@@ -283,7 +283,23 @@ class EnhancedResumeParser {
             // Collect description (bullet points or paragraphs)
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i];
-                if (line !== exp.company && line !== exp.duration) {
+                
+                // Stop if we hit another job title or section header
+                if (/^##\s+/i.test(line) || // Markdown headers
+                    /^[A-Z].*\d{4}/i.test(line) || // Job title with year
+                    /^(Experience|Education|Skills|Certifications|Technical|Languages|Volunteer)/i.test(line)) {
+                    break;
+                }
+                
+                // Skip markdown separators
+                if (line === '---' || line === '***' || line === '___') {
+                    break;
+                }
+                
+                // Only add bullet points or short descriptions
+                if (line !== exp.company && line !== exp.duration && 
+                    (line.startsWith('-') || line.startsWith('•') || line.startsWith('*')) && 
+                    line.length > 3) { // Must be more than just the bullet
                     exp.description.push(line);
                 }
             }
@@ -564,7 +580,7 @@ class EnhancedResumeParser {
             // Check if this looks like a section header
             if (this.isSectionHeader(trimmedLine)) {
                 // Save previous section
-                if (currentSection.content.trim()) {
+                if (currentSection.header && currentSection.content.trim()) {
                     sections.push(currentSection);
                 }
                 // Start new section
@@ -573,9 +589,9 @@ class EnhancedResumeParser {
                 currentSection.content += line + '\n';
             }
         }
-
-        // Add final section
-        if (currentSection.content.trim()) {
+        
+        // Don't forget the last section
+        if (currentSection.header && currentSection.content.trim()) {
             sections.push(currentSection);
         }
 
@@ -583,6 +599,16 @@ class EnhancedResumeParser {
     }
 
     isSectionHeader(line) {
+        // Check for markdown headers first (## Header)
+        if (/^##\s+/i.test(line)) {
+            return true;
+        }
+        
+        // Check for ALL CAPS headers
+        if (line === line.toUpperCase() && /[A-Z]{3,}/.test(line)) {
+            return true;
+        }
+        
         const headerPatterns = [
             /^(experience|employment|work|career|professional)/i,
             /^(education|academic|university|college)/i,
@@ -590,7 +616,8 @@ class EnhancedResumeParser {
             /^(summary|objective|profile)/i,
             /^(projects|portfolio)/i,
             /^(certifications|certificates)/i,
-            /^(awards|achievements|honors)/i
+            /^(awards|achievements|honors)/i,
+            /^(languages|volunteer)/i
         ];
 
         return headerPatterns.some(pattern => pattern.test(line)) &&

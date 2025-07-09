@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UI Generation Debug</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+    <h1>Debug: Is the show-more button being generated?</h1>
+    
+    <div id="test-container"></div>
+    
+    <script>
+        // Mock the exact logic from app.js generateExperienceCard
+        function generateExperienceCard(exp, index) {
+            console.log('Generating card for experience:', exp);
+            console.log('Description array:', exp.description);
+            console.log('Description length:', (exp.description || []).length);
+            console.log('Should show button?', (exp.description || []).length > 3);
+            
+            const skillTags = '';  // Simplified for test
+            
+            const html = `
+                <div class="experience-card">
+                    <div class="experience-header">
+                        <div class="experience-title">${exp.title || 'Professional Role'}</div>
+                        <div class="experience-company">${exp.company || 'Company'}</div>
+                    </div>
+                    <ul class="experience-achievements">
+                        ${(exp.description || []).map((desc, index) => `
+                            <li class="achievement-item ${index >= 3 ? 'achievement-hidden' : ''}" data-index="${index}">
+                                <span class="achievement-text">${desc}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                    ${(exp.description || []).length > 3 ? `
+                        <button class="show-more-btn">
+                            Show ${(exp.description || []).length - 3} more
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            
+            console.log('Generated HTML:', html);
+            return html;
+        }
+        
+        // Test with exact data from resume
+        const testExp = {
+            title: "Senior Product Manager",
+            company: "Google Inc",
+            description: [
+                "Led cross-functional team of 12 engineers and designers to deliver new search features",
+                "Increased user engagement by 35% through data-driven product improvements", 
+                "Managed $2M product budget and coordinated with stakeholders across 5 departments",
+                "Mentored 3 junior product managers and established PM onboarding program",
+                "Collaborated with marketing team to launch products to 100M+ users globally"
+            ]
+        };
+        
+        console.log('=== TESTING UI GENERATION ===');
+        const html = generateExperienceCard(testExp, 0);
+        document.getElementById('test-container').innerHTML = html;
+        
+        // Check if button exists in DOM
+        setTimeout(() => {
+            const button = document.querySelector('.show-more-btn');
+            console.log('Button found in DOM:', button ? 'YES' : 'NO');
+            if (button) {
+                console.log('Button text:', button.textContent);
+                console.log('Button class:', button.className);
+            }
+            
+            const hiddenItems = document.querySelectorAll('.achievement-hidden');
+            console.log('Hidden items found:', hiddenItems.length);
+        }, 100);
+    </script>
+</body>
+</html>

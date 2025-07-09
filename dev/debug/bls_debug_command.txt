@@ -1,0 +1,87 @@
+# BLS API Debug Command - Copy this entire command block to another GPT for debugging
+
+# Set environment variables (optional)
+export BLS_API_KEY="your_api_key_here_if_you_have_one"
+
+# The complete curl command with full verbose debugging
+curl -v \
+  --request POST \
+  --url "https://api.bls.gov/publicAPI/v2/timeseries/data/" \
+  --header "Content-Type: application/json" \
+  --header "Accept: application/json" \
+  --header "User-Agent: CareerAI-Platform/1.0" \
+  --data '{
+    "seriesid": ["CES0000000001", "LAUCN040010000000005", "CUUR0000SA0"],
+    "startyear": "2022",
+    "endyear": "2024",
+    "registrationkey": ""
+  }' \
+  --max-time 30 \
+  --show-error \
+  --fail-with-body \
+  --write-out "\n\n=== Response Statistics ===\nHTTP Code: %{http_code}\nTotal Time: %{time_total}s\nDNS Lookup Time: %{time_namelookup}s\nConnect Time: %{time_connect}s\nTLS Handshake Time: %{time_appconnect}s\nStart Transfer Time: %{time_starttransfer}s\nDownload Size: %{size_download} bytes\nDownload Speed: %{speed_download} bytes/sec\nRemote IP: %{remote_ip}\nSSL Verify Result: %{ssl_verify_result}\n" \
+  --trace-ascii bls_trace.log \
+  --dump-header bls_headers.txt \
+  --output bls_response.json
+
+# Alternative simplified command for basic testing:
+curl -v -X POST \
+  "https://api.bls.gov/publicAPI/v2/timeseries/data/" \
+  -H "Content-Type: application/json" \
+  -d '{"seriesid":["CES0000000001"],"startyear":"2023","endyear":"2024"}' \
+  2>&1 | tee bls_simple_debug.log
+
+# Test basic connectivity to BLS website
+curl -v --connect-timeout 10 --max-time 20 "https://www.bls.gov/" -o /dev/null
+
+# DNS resolution test
+nslookup api.bls.gov
+
+# Network connectivity test
+ping -c 4 api.bls.gov
+
+# SSL/TLS test
+openssl s_client -connect api.bls.gov:443 -servername api.bls.gov < /dev/null
+
+# Explanation of curl flags used:
+# -v, --verbose: Show detailed connection information
+# --request POST: Use HTTP POST method
+# --header: Add HTTP headers
+# --data: Send JSON payload in request body
+# --max-time 30: Timeout after 30 seconds
+# --show-error: Show error details
+# --fail-with-body: Include response body even on HTTP errors
+# --write-out: Display connection statistics
+# --trace-ascii: Log all data transmitted/received
+# --dump-header: Save response headers to file
+# --output: Save response body to file
+
+# Expected BLS API response structure:
+# {
+#   "status": "REQUEST_SUCCEEDED",
+#   "responseTime": 123,
+#   "message": [],
+#   "Results": {
+#     "series": [
+#       {
+#         "seriesID": "CES0000000001",
+#         "data": [...]
+#       }
+#     ]
+#   }
+# }
+
+# Common BLS API Error Codes:
+# 400 Bad Request - Invalid JSON or missing required fields
+# 401 Unauthorized - Invalid API key (if using registered API)
+# 429 Too Many Requests - Rate limit exceeded
+# 500 Internal Server Error - BLS server issues
+
+# Series IDs being tested:
+# CES0000000001 = Total nonfarm employment (seasonally adjusted)
+# LAUCN040010000000005 = Unemployment rate for specific area
+# CUUR0000SA0 = Consumer Price Index for all urban consumers
+
+# Rate Limits:
+# Public API (no key): 25 queries per day, 10 years of data per query
+# Registered API (with key): 500 queries per day, 20 years of data per query

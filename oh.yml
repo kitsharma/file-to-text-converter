@@ -1,0 +1,4 @@
+llm:
+  model: grok-beta
+  api_key: xai-61miiFxSOcEkPw7bTwT9wNLH37sAowbcryv3wD41VDdeRMAknqBC5zGoePxGb5XjJXgn1tnxuFqQltkl
+  base_url: https://api.x.ai/v1
