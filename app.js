@@ -547,7 +547,7 @@ class FileConverter {
                     .trim();
                 
                 if (pageText) {
-                    fullText += `--- Page ${i} ---\n${pageText}\n\n`;
+                    fullText += `${pageText}\n\n`;
                 }
             }
 
@@ -1322,85 +1322,253 @@ class FileConverter {
     }
     
     generateExperienceCard(exp, index) {
-        
         const skillTags = (exp.skills || []).slice(0, 5).map(skill => {
             const skillType = this.categorizeSkill(skill);
             return `<span class="skill-tag ${skillType}">${skill}</span>`;
         }).join('');
         
+        const startDate = exp.startDate || '';
+        const endDate = exp.endDate || 'Present';
+        const duration = exp.duration || this.calculateDuration(startDate, endDate);
+        
+        const redactedCompany = this.redactionState?.entities?.companies?.get(exp.company) !== false ? 
+            '[Private Company]' : exp.company;
+        
+        const redactedTitle = this.applyRedaction(exp.title || 'Professional Role', 'experience');
+        const redactedDescription = (exp.description || []).map(desc => 
+            this.applyRedaction(desc, 'experience')
+        );
+        
         return `
-            <div class="experience-card">
+            <div class="experience-card" data-experience-index="${index}">
                 <div class="experience-header">
-                    <div>
-                        <div class="experience-title">${exp.title || 'Professional Role'}</div>
+                    <div class="experience-title-group">
+                        <div class="experience-title" title="${exp.title || 'Professional Role'}">${redactedTitle}</div>
                         <div class="experience-company-wrapper">
                             <div class="experience-company">
-                                <span id="company-${index}" style="display: none;">${exp.company || 'Company'}</span>
-                                <span id="company-redacted-${index}">[Private Company]</span>
+                                <span id="company-${index}" style="display: none;" title="${exp.company || 'Company'}">${exp.company || 'Company'}</span>
+                                <span id="company-redacted-${index}" title="Company name hidden for privacy">${redactedCompany}</span>
                             </div>
-                            <button onclick="
-                                const company = document.getElementById('company-${index}');
-                                const redacted = document.getElementById('company-redacted-${index}');
-                                if (company.style.display === 'none') {
-                                    company.style.display = 'inline';
-                                    redacted.style.display = 'none';
-                                    this.textContent = '🔒';
-                                } else {
-                                    company.style.display = 'none';
-                                    redacted.style.display = 'inline';
-                                    this.textContent = '👁️';
-                                }
-                            " style="background: none; border: none; font-size: 16px; cursor: pointer;">👁️</button>
+                            <button 
+                                id="company-toggle-${index}"
+                                onclick="window.fileConverter.toggleCompanyVisibility(${index})"
+                                title="Click to show/hide company name"
+                                class="redaction-toggle-btn"
+                                aria-label="Toggle company name visibility">
+                                <span class="toggle-icon">👁️</span>
+                                <span class="toggle-text sr-only">Show</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="experience-duration">${exp.duration || 'Duration'}</div>
+                    <div class="experience-duration" title="Employment duration">
+                        <span class="duration-text">${duration}</span>
+                        ${startDate && endDate ? `<span class="date-range">${startDate} - ${endDate}</span>` : ''}
+                    </div>
                 </div>
-                <ul class="experience-achievements">
-                    ${(exp.description || []).slice(0, 3).map((desc, index) => `
-                        <li class="achievement-item" data-index="${index}">
-                            <span class="achievement-text">${desc}</span>
-                        </li>
-                    `).join('')}
-                    ${(exp.description || []).length > 3 ? `
-                        <li class="show-more-item">
-                            <span onclick="
-                                const card = this.closest('.experience-card');
-                                card.querySelector('.experience-achievements').style.display='none';
-                                card.querySelector('.experience-achievements-extended').style.display='block';
-                            " style="color: #0066cc; cursor: pointer;">
-                                Show ${(exp.description || []).length - 3} more
-                            </span>
-                        </li>
-                    ` : ''}
-                </ul>
-                ${(exp.description || []).length > 3 ? `
-                    <ul class="experience-achievements-extended" style="display: none;">
-                        ${(exp.description || []).map((desc, index) => `
-                            <li class="achievement-item" data-index="${index}">
+                
+                <div class="experience-achievements-wrapper">
+                    <ul class="experience-achievements" id="achievements-${index}">
+                        ${redactedDescription.slice(0, 3).map((desc, descIndex) => `
+                            <li class="achievement-item" data-index="${descIndex}">
+                                <span class="achievement-bullet">•</span>
                                 <span class="achievement-text">${desc}</span>
                             </li>
                         `).join('')}
-                        <li class="show-less-item">
-                            <span onclick="
-                                const card = this.closest('.experience-card');
-                                card.querySelector('.experience-achievements-extended').style.display='none';
-                                card.querySelector('.experience-achievements').style.display='block';
-                            " style="color: #0066cc; cursor: pointer;">
-                                Show less
-                            </span>
-                        </li>
+                        ${redactedDescription.length > 3 ? `
+                            <li class="show-more-item">
+                                <button onclick="window.fileConverter.toggleAchievements(${index}, true)" 
+                                        class="show-more-btn" 
+                                        aria-label="Show all achievements">
+                                    <span class="expand-icon">▼</span>
+                                    <span class="expand-text">Show ${redactedDescription.length - 3} more achievement${redactedDescription.length - 3 > 1 ? 's' : ''}</span>
+                                </button>
+                            </li>
+                        ` : ''}
                     </ul>
-                ` : ''}
+                    
+                    ${redactedDescription.length > 3 ? `
+                        <ul class="experience-achievements-extended" id="achievements-extended-${index}" style="display: none;">
+                            ${redactedDescription.map((desc, descIndex) => `
+                                <li class="achievement-item" data-index="${descIndex}">
+                                    <span class="achievement-bullet">•</span>
+                                    <span class="achievement-text">${desc}</span>
+                                </li>
+                            `).join('')}
+                            <li class="show-less-item">
+                                <button onclick="window.fileConverter.toggleAchievements(${index}, false)" 
+                                        class="show-less-btn" 
+                                        aria-label="Show fewer achievements">
+                                    <span class="collapse-icon">▲</span>
+                                    <span class="collapse-text">Show less</span>
+                                </button>
+                            </li>
+                        </ul>
+                    ` : ''}
+                </div>
+                
                 ${skillTags ? `
                     <div class="experience-skills">
-                        ${skillTags}
+                        <div class="skills-label">Key Skills:</div>
+                        <div class="skills-tags">${skillTags}</div>
+                        ${(exp.skills || []).length > 5 ? `
+                            <button class="skills-show-more" onclick="window.fileConverter.toggleSkills(${index})" title="View all skills">
+                                +${(exp.skills || []).length - 5} more
+                            </button>
+                        ` : ''}
                     </div>
                 ` : ''}
+                
+                <div class="experience-metadata">
+                    <div class="experience-type-badge ${this.getEmploymentType(exp.type)}">${exp.type || 'Full-time'}</div>
+                    ${exp.location ? `<div class="experience-location" title="Work location">${this.applyRedaction(exp.location, 'location')}</div>` : ''}
+                </div>
             </div>
         `;
     }
     
-    // toggleExperienceDetails removed - now handled by native HTML details/summary
+    // Enhanced experience section methods
+    toggleCompanyVisibility(index) {
+        const company = document.getElementById(`company-${index}`);
+        const redacted = document.getElementById(`company-redacted-${index}`);
+        const toggle = document.getElementById(`company-toggle-${index}`);
+        
+        if (company && redacted && toggle) {
+            const isVisible = company.style.display !== 'none';
+            
+            if (isVisible) {
+                company.style.display = 'none';
+                redacted.style.display = 'inline';
+                toggle.querySelector('.toggle-icon').textContent = '👁️';
+                toggle.querySelector('.toggle-text').textContent = 'Show';
+                toggle.title = 'Click to show company name';
+            } else {
+                company.style.display = 'inline';
+                redacted.style.display = 'none';
+                toggle.querySelector('.toggle-icon').textContent = '🔒';
+                toggle.querySelector('.toggle-text').textContent = 'Hide';
+                toggle.title = 'Click to hide company name';
+            }
+        }
+    }
+    
+    toggleAchievements(index, showMore) {
+        const achievements = document.getElementById(`achievements-${index}`);
+        const extended = document.getElementById(`achievements-extended-${index}`);
+        
+        if (achievements && extended) {
+            if (showMore) {
+                achievements.style.display = 'none';
+                extended.style.display = 'block';
+                // Smooth scroll to ensure content is visible
+                extended.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                extended.style.display = 'none';
+                achievements.style.display = 'block';
+            }
+        }
+    }
+    
+    toggleSkills(index) {
+        const experienceCard = document.querySelector(`[data-experience-index="${index}"]`);
+        const skillsSection = experienceCard?.querySelector('.experience-skills');
+        
+        if (skillsSection) {
+            const isExpanded = skillsSection.classList.contains('expanded');
+            
+            if (isExpanded) {
+                skillsSection.classList.remove('expanded');
+                skillsSection.querySelector('.skills-show-more').textContent = 
+                    `+${this.getSkillsLength(index) - 5} more`;
+            } else {
+                skillsSection.classList.add('expanded');
+                skillsSection.querySelector('.skills-show-more').textContent = 'Show less';
+                this.renderAllSkills(index);
+            }
+        }
+    }
+    
+    calculateDuration(startDate, endDate) {
+        if (!startDate) return 'Duration not specified';
+        
+        const start = new Date(startDate);
+        const end = endDate && endDate !== 'Present' ? new Date(endDate) : new Date();
+        
+        const months = (end.getFullYear() - start.getFullYear()) * 12 + 
+                      (end.getMonth() - start.getMonth());
+        
+        if (months < 1) return 'Less than 1 month';
+        if (months < 12) return `${months} month${months > 1 ? 's' : ''}`;
+        
+        const years = Math.floor(months / 12);
+        const remainingMonths = months % 12;
+        
+        if (remainingMonths === 0) {
+            return `${years} year${years > 1 ? 's' : ''}`;
+        } else {
+            return `${years} year${years > 1 ? 's' : ''}, ${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`;
+        }
+    }
+    
+    getEmploymentType(type) {
+        const typeMap = {
+            'full-time': 'full-time',
+            'part-time': 'part-time',
+            'contract': 'contract',
+            'freelance': 'freelance',
+            'internship': 'internship',
+            'volunteer': 'volunteer'
+        };
+        return typeMap[type?.toLowerCase()] || 'full-time';
+    }
+    
+    getSkillsLength(index) {
+        const exp = this.parsedResumeData?.experience?.[index];
+        return exp?.skills?.length || 0;
+    }
+    
+    renderAllSkills(index) {
+        const exp = this.parsedResumeData?.experience?.[index];
+        if (!exp?.skills) return;
+        
+        const skillsContainer = document.querySelector(`[data-experience-index="${index}"] .skills-tags`);
+        if (skillsContainer) {
+            const allSkillTags = exp.skills.map(skill => {
+                const skillType = this.categorizeSkill(skill);
+                return `<span class="skill-tag ${skillType}">${skill}</span>`;
+            }).join('');
+            skillsContainer.innerHTML = allSkillTags;
+        }
+    }
+    
+    toggleInstitutionVisibility(index) {
+        const institution = document.getElementById(`institution-${index}`);
+        const redacted = document.getElementById(`institution-redacted-${index}`);
+        const toggle = document.getElementById(`institution-toggle-${index}`);
+        
+        if (institution && redacted && toggle) {
+            const isVisible = institution.style.display !== 'none';
+            const educationCard = document.querySelector(`[data-education-index="${index}"]`);
+            const institutionName = institution.textContent;
+            
+            if (isVisible) {
+                institution.style.display = 'none';
+                redacted.style.display = 'inline';
+                toggle.querySelector('.toggle-icon').textContent = '👁️';
+                toggle.querySelector('.toggle-text').textContent = 'Show';
+                toggle.title = 'Click to show institution name';
+                // Update redaction state
+                this.redactionState.entities.schools.set(institutionName, true);
+            } else {
+                institution.style.display = 'inline';
+                redacted.style.display = 'none';
+                toggle.querySelector('.toggle-icon').textContent = '🔒';
+                toggle.querySelector('.toggle-text').textContent = 'Hide';
+                toggle.title = 'Click to hide institution name';
+                // Update redaction state
+                this.redactionState.entities.schools.set(institutionName, false);
+            }
+        }
+    }
     
     // Unified redaction engine - applies all redactions consistently
     applyRedaction(text, context = 'all') {
@@ -1453,6 +1621,17 @@ class FileConverter {
     
     updateEducationSection(normalizedData) {
         if (this.educationList && normalizedData.education && normalizedData.education.length > 0) {
+            // Parse education data if it comes as text
+            let educationData = normalizedData.education;
+            
+            // Handle case where education might be a single text blob
+            if (educationData.length === 1 && typeof educationData[0] === 'string') {
+                educationData = this.parseEducationText(educationData[0]);
+            } else if (educationData.length === 1 && educationData[0].degree && educationData[0].degree.includes('\n')) {
+                // Handle multi-line degree field
+                educationData = this.parseEducationFromMultiline(educationData[0]);
+            }
+            
             const educationHtml = `
                 <div class="career-section-card">
                     <div class="career-section-header">
@@ -1460,10 +1639,10 @@ class FileConverter {
                             <div class="career-section-icon">🎓</div>
                             Your Educational Foundation
                         </div>
-                        <div class="career-section-badge">${normalizedData.education.length} Achievement${normalizedData.education.length > 1 ? 's' : ''}</div>
+                        <div class="career-section-badge">${educationData.length} Achievement${educationData.length > 1 ? 's' : ''}</div>
                     </div>
                     <div class="education-grid">
-                        ${normalizedData.education.map((edu, index) => this.generateEducationCard(edu, index)).join('')}
+                        ${educationData.map((edu, index) => this.generateEducationCard(edu, index)).join('')}
                     </div>
                 </div>
             `;
@@ -1487,34 +1666,185 @@ class FileConverter {
         }
     }
     
-    generateEducationCard(edu, index) {
-        const schoolKey = `school-${index}`;
-        // Use actual school name as key instead of index
-        const schoolName = edu.institution || 'Unknown Institution';
+    parseEducationText(text) {
+        const educationItems = [];
+        const lines = text.split('\n').filter(line => line.trim());
         
-        // Initialize school redaction state if not exists (default to true)
-        if (!this.redactionState.entities.schools.has(schoolName)) {
-            this.redactionState.entities.schools.set(schoolName, true);
+        // Handle multi-line education format
+        let currentEdu = null;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // Check if this line starts a new education entry (degree line)
+            if (line.match(/^(M\.S\.|B\.S\.|B\.E\.|B\.A\.|M\.A\.|Ph\.D\.|Bachelor|Master|Doctor)/i)) {
+                // Save previous education if exists
+                if (currentEdu && currentEdu.degree) {
+                    educationItems.push(currentEdu);
+                }
+                
+                // Start new education entry
+                currentEdu = {};
+                
+                // Parse degree and field from the line
+                const degreeFieldMatch = line.match(/^((?:M\.S\.|B\.S\.|B\.E\.|B\.A\.|M\.A\.|Ph\.D\.|Bachelor|Master|Doctor)(?:\s+of\s+\w+)?)\s+(?:in\s+)?(.+?)(?:\s+at\s+|\s+from\s+|$)/i);
+                if (degreeFieldMatch) {
+                    currentEdu.degree = degreeFieldMatch[1].trim();
+                    currentEdu.field = degreeFieldMatch[2].trim();
+                } else {
+                    currentEdu.degree = line;
+                }
+                
+            } else if (currentEdu && line.match(/(University|College|Institute|School|Polytechnic)/i)) {
+                // This line contains the institution name
+                currentEdu.institution = line.replace(/^\s*-?\s*/, '').trim(); // Remove leading dashes
+                
+            } else if (currentEdu && line.match(/Graduated:|Graduation:|Completed:/i)) {
+                // This line contains graduation info
+                const yearMatch = line.match(/\b(19|20)\d{2}\b/);
+                if (yearMatch) {
+                    currentEdu.year = yearMatch[0];
+                }
+                
+            } else if (currentEdu && line.match(/GPA/i)) {
+                // This line contains GPA
+                const gpaMatch = line.match(/GPA[:\s]+([0-9.]+)/i);
+                if (gpaMatch) {
+                    currentEdu.gpa = gpaMatch[1];
+                }
+                
+            } else if (line.match(/Certifications:/i)) {
+                // Handle certifications separately
+                if (currentEdu && currentEdu.degree) {
+                    educationItems.push(currentEdu);
+                }
+                
+                const certs = line.replace(/Certifications:/i, '').trim();
+                currentEdu = {
+                    degree: 'Professional Certifications',
+                    field: certs,
+                    institution: 'Various Institutions'
+                };
+            }
         }
         
-        const isSchoolProtected = this.redactionState.entities.schools.get(schoolName);
-        const schoolRedaction = this.getSchoolRedaction(edu.institution);
+        // Don't forget the last education entry
+        if (currentEdu && currentEdu.degree) {
+            educationItems.push(currentEdu);
+        }
+        
+        return educationItems.length > 0 ? educationItems : [{ degree: text, institution: 'Educational Institution' }];
+    }
+    
+    parseEducationFromMultiline(edu) {
+        const text = edu.degree;
+        return this.parseEducationText(text);
+    }
+    
+    generateEducationCard(edu, index) {
+        // Debug logging
+        console.log('Education data for card', index, ':', edu);
+        
+        // Extract institution name from the education data
+        let institutionName = edu.institution || edu.school || edu.university || 'Unknown Institution';
+        
+        // If no institution found, try to extract from degree field or original text
+        if (institutionName === 'Unknown Institution') {
+            // Check if there's original text that might contain the university
+            const originalText = edu.originalText || edu.rawText || edu.text || '';
+            const degreeText = edu.degree || '';
+            const fullText = originalText + ' ' + degreeText;
+            
+            // Look for patterns like "Bachelor of Arts Communication Studies, University Name"
+            const institutionMatch = fullText.match(/,\s*([A-Za-z\s]+(?:University|College|Institute|School|Polytechnic))/i);
+            if (institutionMatch) {
+                institutionName = institutionMatch[1].trim();
+            } else {
+                // Try to find university names in the text
+                const universityMatch = fullText.match(/([\w\s]+(?:University|College|Institute|School|Polytechnic))/i);
+                if (universityMatch) {
+                    institutionName = universityMatch[1].trim();
+                }
+            }
+            
+            // If still no institution, check if there might be a stored university name
+            // This is a fallback for cases where the university name was in the original resume
+            if (institutionName === 'Unknown Institution' && this.parsedResumeData?.originalText) {
+                const originalResumeText = this.parsedResumeData.originalText;
+                const commonUniversities = originalResumeText.match(/([\w\s]+(?:University|College|Institute|School|Polytechnic))/gi);
+                if (commonUniversities && commonUniversities.length > 0) {
+                    // Use the first university found - this is a reasonable fallback
+                    institutionName = commonUniversities[0].trim();
+                }
+            }
+        }
+        
+        // Initialize school redaction state if not exists (default to true for privacy)
+        if (!this.redactionState.entities.schools.has(institutionName)) {
+            this.redactionState.entities.schools.set(institutionName, true);
+        }
+        
+        const isSchoolRedacted = this.redactionState.entities.schools.get(institutionName) !== false;
+        
+        // Parse degree and field if combined
+        let degree = edu.degree || '';
+        let field = edu.field || '';
+        let gpa = edu.gpa || '';
+        let year = edu.year || edu.graduationYear || '';
+        
+        // Handle combined degree strings (e.g., "M.S. Industrial Engineering")
+        if (degree && !field && degree.includes(' in ')) {
+            const parts = degree.split(' in ');
+            degree = parts[0].trim();
+            field = parts[1].trim();
+        } else if (degree && !field && degree.match(/^(B\.|M\.|Ph\.D\.|Bachelor|Master|Doctor)/)) {
+            const match = degree.match(/^(B\.[A-Z]+\.|M\.[A-Z]+\.|Ph\.D\.|Bachelor of \w+|Master of \w+|Doctor of \w+)\s+(.+)/);
+            if (match) {
+                degree = match[1];
+                field = match[2];
+            }
+        }
+        
+        // Apply redaction to degree and field if they contain institution names
+        const redactedDegree = this.applyRedaction(degree, 'education');
+        const redactedField = this.applyRedaction(field, 'education');
         
         return `
-            <div class="education-card">
-                <div class="education-degree">${edu.degree || 'Educational Achievement'}</div>
-                <div class="education-institution-wrapper">
-                    <div class="education-institution ${isSchoolProtected ? 'private' : ''}">
-                        ${isSchoolProtected ? '[Private Institution]' : edu.institution || 'Institution'}
+            <div class="education-card" data-education-index="${index}">
+                <div class="education-header">
+                    <div class="education-content">
+                        <div class="education-degree-line">
+                            <span class="education-degree">${redactedDegree || 'Degree'}</span>
+                            ${redactedField ? `<span class="education-field">${redactedField}</span>` : ''}
+                        </div>
+                        <div class="education-institution-wrapper">
+                            <div class="education-institution">
+                                <span id="institution-${index}" style="display: ${isSchoolRedacted ? 'none' : 'inline'};" title="${institutionName}">${institutionName}</span>
+                                <span id="institution-redacted-${index}" style="display: ${isSchoolRedacted ? 'inline' : 'none'};" title="Institution name hidden for privacy">[Private Institution]</span>
+                            </div>
+                            <button 
+                                id="institution-toggle-${index}"
+                                onclick="window.fileConverter.toggleInstitutionVisibility(${index})"
+                                title="${isSchoolRedacted ? 'Click to show institution name' : 'Click to hide institution name'}"
+                                class="redaction-toggle-btn"
+                                aria-label="Toggle institution name visibility">
+                                <span class="toggle-icon">${isSchoolRedacted ? '👁️' : '🔒'}</span>
+                                <span class="toggle-text sr-only">${isSchoolRedacted ? 'Show' : 'Hide'}</span>
+                            </button>
+                        </div>
                     </div>
-                    <button class="privacy-toggle-btn ${isSchoolProtected ? 'active' : ''}" 
-                            onclick="window.fileConverter.toggleEntityPrivacy('school', '${schoolName.replace(/'/g, '\\\'')}')" 
-                            title="${isSchoolProtected ? 'Institution name is private - click to show' : 'Click to keep institution name private'}">
-                        ${isSchoolProtected ? '🔒' : '👁️'}
-                    </button>
+                    <div class="education-metadata">
+                        ${year ? `<div class="education-year" title="Graduation year">${year}</div>` : ''}
+                        ${gpa ? `<div class="education-gpa" title="Grade Point Average">GPA: ${gpa}</div>` : ''}
+                    </div>
                 </div>
-                <div class="education-year">${edu.year || 'Year'}</div>
-                ${edu.gpa ? `<div class="education-gpa">GPA: ${edu.gpa}</div>` : ''}
+                ${edu.honors || edu.activities || edu.thesis ? `
+                    <div class="education-details">
+                        ${edu.honors ? `<div class="education-honors"><span class="detail-label">Honors:</span> ${this.applyRedaction(edu.honors, 'education')}</div>` : ''}
+                        ${edu.thesis ? `<div class="education-thesis"><span class="detail-label">Thesis:</span> ${this.applyRedaction(edu.thesis, 'education')}</div>` : ''}
+                        ${edu.activities ? `<div class="education-activities"><span class="detail-label">Activities:</span> ${this.applyRedaction(edu.activities, 'education')}</div>` : ''}
+                    </div>
+                ` : ''}
             </div>
         `;
     }
