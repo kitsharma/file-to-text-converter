@@ -327,6 +327,8 @@ class FileConverter {
                 this.switchTab(e.target.dataset.tab);
             }
         });
+        
+        // Note: Show more/less now handled by native HTML details/summary
     }
 
     handleDragOver(e) {
@@ -414,14 +416,20 @@ class FileConverter {
                     this.parsedResumeData = parsedData;
                     console.log('[DEBUG] Resume parsed successfully');
                     
-                    // Initialize redaction state if not exists (default to redacted)
+                    // Initialize unified redaction state (default to redacted)
                     if (!this.redactionState) {
                         this.redactionState = {
-                            name: true,
-                            email: true,
-                            phone: true,
-                            companies: {},
-                            schools: {}
+                            personalInfo: {
+                                name: true,
+                                email: true,
+                                phone: true,
+                                address: true
+                            },
+                            entities: {
+                                companies: new Map(),
+                                schools: new Map(),
+                                locations: new Map()
+                            }
                         };
                     }
                     
@@ -1047,14 +1055,20 @@ class FileConverter {
         // Normalize data structure (handle different possible formats)
         const normalizedData = this.normalizeResumeData(data);
         
-        // Initialize redaction state if not exists (default to protected)
+        // Initialize unified redaction state if not exists (default to protected)
         if (!this.redactionState) {
             this.redactionState = {
-                name: true,
-                email: true,
-                phone: true,
-                companies: {},
-                schools: {}
+                personalInfo: {
+                    name: true,
+                    email: true,
+                    phone: true,
+                    address: true
+                },
+                entities: {
+                    companies: new Map(),
+                    schools: new Map(),
+                    locations: new Map()
+                }
             };
         }
         
@@ -1178,7 +1192,7 @@ class FileConverter {
         const items = [];
         
         if (contact.name) {
-            const isProtected = this.redactionState.name;
+            const isProtected = this.redactionState.personalInfo.name;
             items.push(`
                 <div class="contact-item">
                     <div class="contact-label">Name</div>
@@ -1197,7 +1211,7 @@ class FileConverter {
         }
         
         if (contact.email) {
-            const isProtected = this.redactionState.email;
+            const isProtected = this.redactionState.personalInfo.email;
             items.push(`
                 <div class="contact-item">
                     <div class="contact-label">Email</div>
@@ -1216,7 +1230,7 @@ class FileConverter {
         }
         
         if (contact.phone) {
-            const isProtected = this.redactionState.phone;
+            const isProtected = this.redactionState.personalInfo.phone;
             items.push(`
                 <div class="contact-item">
                     <div class="contact-label">Phone</div>
@@ -1308,9 +1322,6 @@ class FileConverter {
     }
     
     generateExperienceCard(exp, index) {
-        const companyKey = `company-${index}`;
-        const isCompanyProtected = this.redactionState.companies[companyKey] !== false;
-        const companyRedaction = this.getCompanyRedaction(exp.company);
         
         const skillTags = (exp.skills || []).slice(0, 5).map(skill => {
             const skillType = this.categorizeSkill(skill);
@@ -1323,21 +1334,63 @@ class FileConverter {
                     <div>
                         <div class="experience-title">${exp.title || 'Professional Role'}</div>
                         <div class="experience-company-wrapper">
-                            <div class="experience-company ${isCompanyProtected ? 'private' : ''}">
-                                ${isCompanyProtected ? '[Private Company]' : exp.company || 'Company'}
+                            <div class="experience-company">
+                                <span id="company-${index}" style="display: none;">${exp.company || 'Company'}</span>
+                                <span id="company-redacted-${index}">[Private Company]</span>
                             </div>
-                            <button class="privacy-toggle-btn ${isCompanyProtected ? 'active' : ''}" 
-                                    onclick="window.fileConverter.togglePrivacy('${companyKey}')" 
-                                    title="${isCompanyProtected ? 'Company name is private - click to show' : 'Click to keep company name private'}">
-                                ${isCompanyProtected ? '🔒' : '👁️'}
-                            </button>
+                            <button onclick="
+                                const company = document.getElementById('company-${index}');
+                                const redacted = document.getElementById('company-redacted-${index}');
+                                if (company.style.display === 'none') {
+                                    company.style.display = 'inline';
+                                    redacted.style.display = 'none';
+                                    this.textContent = '🔒';
+                                } else {
+                                    company.style.display = 'none';
+                                    redacted.style.display = 'inline';
+                                    this.textContent = '👁️';
+                                }
+                            " style="background: none; border: none; font-size: 16px; cursor: pointer;">👁️</button>
                         </div>
                     </div>
                     <div class="experience-duration">${exp.duration || 'Duration'}</div>
                 </div>
-                <div class="experience-description">
-                    ${(exp.description || []).map(desc => `<p>• ${desc}</p>`).join('')}
-                </div>
+                <ul class="experience-achievements">
+                    ${(exp.description || []).slice(0, 3).map((desc, index) => `
+                        <li class="achievement-item" data-index="${index}">
+                            <span class="achievement-text">${desc}</span>
+                        </li>
+                    `).join('')}
+                    ${(exp.description || []).length > 3 ? `
+                        <li class="show-more-item">
+                            <span onclick="
+                                const card = this.closest('.experience-card');
+                                card.querySelector('.experience-achievements').style.display='none';
+                                card.querySelector('.experience-achievements-extended').style.display='block';
+                            " style="color: #0066cc; cursor: pointer;">
+                                Show ${(exp.description || []).length - 3} more
+                            </span>
+                        </li>
+                    ` : ''}
+                </ul>
+                ${(exp.description || []).length > 3 ? `
+                    <ul class="experience-achievements-extended" style="display: none;">
+                        ${(exp.description || []).map((desc, index) => `
+                            <li class="achievement-item" data-index="${index}">
+                                <span class="achievement-text">${desc}</span>
+                            </li>
+                        `).join('')}
+                        <li class="show-less-item">
+                            <span onclick="
+                                const card = this.closest('.experience-card');
+                                card.querySelector('.experience-achievements-extended').style.display='none';
+                                card.querySelector('.experience-achievements').style.display='block';
+                            " style="color: #0066cc; cursor: pointer;">
+                                Show less
+                            </span>
+                        </li>
+                    </ul>
+                ` : ''}
                 ${skillTags ? `
                     <div class="experience-skills">
                         ${skillTags}
@@ -1345,6 +1398,57 @@ class FileConverter {
                 ` : ''}
             </div>
         `;
+    }
+    
+    // toggleExperienceDetails removed - now handled by native HTML details/summary
+    
+    // Unified redaction engine - applies all redactions consistently
+    applyRedaction(text, context = 'all') {
+        if (!text || !this.parsedResumeData?.originalContact) return text;
+        
+        let redactedText = text;
+        
+        // Apply personal information redaction
+        if (this.redactionState.personalInfo.name && this.parsedResumeData.originalContact.name) {
+            const nameRegex = new RegExp(this.parsedResumeData.originalContact.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            redactedText = redactedText.replace(nameRegex, '[Private Name]');
+        }
+        
+        if (this.redactionState.personalInfo.email && this.parsedResumeData.originalContact.email) {
+            const emailRegex = new RegExp(this.parsedResumeData.originalContact.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            redactedText = redactedText.replace(emailRegex, '[Private Email]');
+        }
+        
+        if (this.redactionState.personalInfo.phone && this.parsedResumeData.originalContact.phone) {
+            const phoneRegex = new RegExp(this.parsedResumeData.originalContact.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            redactedText = redactedText.replace(phoneRegex, '[Private Phone]');
+        }
+        
+        if (this.redactionState.personalInfo.address && this.parsedResumeData.originalContact.location) {
+            const addressRegex = new RegExp(this.parsedResumeData.originalContact.location.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            redactedText = redactedText.replace(addressRegex, '[Private Location]');
+        }
+        
+        // Apply entity-based redaction
+        if (this.redactionState.entities.companies) {
+            this.redactionState.entities.companies.forEach((isRedacted, companyName) => {
+                if (isRedacted) {
+                    const companyRegex = new RegExp(companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                    redactedText = redactedText.replace(companyRegex, '[Private Company]');
+                }
+            });
+        }
+        
+        if (this.redactionState.entities.schools) {
+            this.redactionState.entities.schools.forEach((isRedacted, schoolName) => {
+                if (isRedacted) {
+                    const schoolRegex = new RegExp(schoolName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                    redactedText = redactedText.replace(schoolRegex, '[Private Institution]');
+                }
+            });
+        }
+        
+        return redactedText;
     }
     
     updateEducationSection(normalizedData) {
@@ -1385,7 +1489,15 @@ class FileConverter {
     
     generateEducationCard(edu, index) {
         const schoolKey = `school-${index}`;
-        const isSchoolProtected = this.redactionState.schools[schoolKey] !== false;
+        // Use actual school name as key instead of index
+        const schoolName = edu.institution || 'Unknown Institution';
+        
+        // Initialize school redaction state if not exists (default to true)
+        if (!this.redactionState.entities.schools.has(schoolName)) {
+            this.redactionState.entities.schools.set(schoolName, true);
+        }
+        
+        const isSchoolProtected = this.redactionState.entities.schools.get(schoolName);
         const schoolRedaction = this.getSchoolRedaction(edu.institution);
         
         return `
@@ -1396,7 +1508,7 @@ class FileConverter {
                         ${isSchoolProtected ? '[Private Institution]' : edu.institution || 'Institution'}
                     </div>
                     <button class="privacy-toggle-btn ${isSchoolProtected ? 'active' : ''}" 
-                            onclick="window.fileConverter.togglePrivacy('${schoolKey}')" 
+                            onclick="window.fileConverter.toggleEntityPrivacy('school', '${schoolName.replace(/'/g, '\\\'')}')" 
                             title="${isSchoolProtected ? 'Institution name is private - click to show' : 'Click to keep institution name private'}">
                         ${isSchoolProtected ? '🔒' : '👁️'}
                     </button>
@@ -1577,18 +1689,29 @@ class FileConverter {
     }
 
     togglePrivacy(field) {
-        if (field === 'name' || field === 'email' || field === 'phone') {
-            this.redactionState[field] = !this.redactionState[field];
-        } else if (field.startsWith('company-')) {
-            this.redactionState.companies[field] = !this.redactionState.companies[field];
-        } else if (field.startsWith('school-')) {
-            this.redactionState.schools[field] = !this.redactionState.schools[field];
+        // Handle personal info fields
+        if (field === 'name' || field === 'email' || field === 'phone' || field === 'address') {
+            this.redactionState.personalInfo[field] = !this.redactionState.personalInfo[field];
         }
         
+        this.refreshAllDisplays();
+    }
+    
+    toggleEntityPrivacy(entityType, entityValue) {
+        // Handle entity-based privacy (companies, schools, locations)
+        if (this.redactionState.entities[entityType + 's']) {
+            const currentState = this.redactionState.entities[entityType + 's'].get(entityValue);
+            this.redactionState.entities[entityType + 's'].set(entityValue, !currentState);
+        }
+        
+        this.refreshAllDisplays();
+    }
+    
+    refreshAllDisplays() {
         // Re-render the display with updated privacy state
         this.updateBasicResumeDisplay(this.parsedResumeData);
         
-        // Apply privacy to all text content consistently (including raw text displays)
+        // Apply privacy to all text content consistently
         this.applyPrivacyToAllDisplays();
         
         // Show encouraging message about privacy
@@ -1602,16 +1725,23 @@ class FileConverter {
     
     getPrivateFieldsCount() {
         let count = 0;
-        if (this.redactionState.name) count++;
-        if (this.redactionState.email) count++;
-        if (this.redactionState.phone) count++;
         
-        Object.values(this.redactionState.companies).forEach(isPrivate => {
-            if (isPrivate !== false) count++;
+        // Count personal info fields
+        Object.values(this.redactionState.personalInfo).forEach(isPrivate => {
+            if (isPrivate) count++;
         });
         
-        Object.values(this.redactionState.schools).forEach(isPrivate => {
-            if (isPrivate !== false) count++;
+        // Count entity fields
+        this.redactionState.entities.companies.forEach(isPrivate => {
+            if (isPrivate) count++;
+        });
+        
+        this.redactionState.entities.schools.forEach(isPrivate => {
+            if (isPrivate) count++;
+        });
+        
+        this.redactionState.entities.locations.forEach(isPrivate => {
+            if (isPrivate) count++;
         });
         
         return count;
@@ -3749,22 +3879,6 @@ This analysis was generated using O*NET occupational data and market demand insi
     }
 }
 
-// Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        window.fileConverter = new FileConverter();
-        console.log('File Converter initialized successfully');
-    } catch (error) {
-        console.error('Failed to initialize File Converter:', error);
-        
-        // Show error to user if initialization fails
-        const errorDiv = document.getElementById('errorMessage');
-        if (errorDiv) {
-            errorDiv.textContent = 'Application failed to initialize. Please refresh the page.';
-            errorDiv.style.display = 'block';
-        }
-    }
-});
 
 // Handle uncaught errors
 window.addEventListener('error', (event) => {

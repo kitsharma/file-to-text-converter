@@ -1385,6 +1385,104 @@
     visibility: visible;
 }
 
+/* Experience Achievement List Styling */
+.experience-achievements {
+    display: block;
+    list-style: none;
+    padding-left: 0;
+    margin: 1rem 0 0 0;
+}
+
+.achievement-item {
+    display: list-item !important;
+    position: relative;
+    padding-left: 1.75rem !important;
+    margin: 0 0 0.75rem 0 !important;
+    line-height: 1.6;
+    color: var(--neutral-700);
+    list-style: none;
+    clear: both;
+}
+
+.achievement-item::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--primary-green);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Pure CSS show/hide with details/summary */
+.experience-achievements .achievement-item:nth-child(n+4) {
+    display: none;
+}
+
+.experience-details[open] + .experience-achievements .achievement-item:nth-child(n+4) {
+    display: list-item !important;
+}
+
+.experience-details {
+    margin: 0.75rem 0;
+}
+
+.show-more-summary {
+    cursor: pointer;
+    color: var(--primary-600);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    list-style: none;
+}
+
+.show-more-summary::-webkit-details-marker {
+    display: none;
+}
+
+.experience-details[open] .show-more-summary::after {
+    content: " less";
+}
+
+.achievement-text {
+    display: block;
+}
+
+.show-more-btn {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.show-more-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+/* Mobile optimizations for experience achievements */
+@media (max-width: 768px) {
+    .achievement-item {
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        padding-left: 1.5rem;
+    }
+    
+    .achievement-item::before {
+        font-size: 1.1rem;
+    }
+    
+    .show-more-btn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
 /* Call-to-Action Buttons */
 .cta-button {
     background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-teal) 100%);
