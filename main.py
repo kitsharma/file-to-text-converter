@@ -45,8 +45,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files
-app.mount("/static", StaticFiles(directory="public"), name="static")
+# Serve static files in the correct order (specific routes first)
+try:
+    if os.path.exists("src"):
+        app.mount("/src", StaticFiles(directory="src"), name="src")
+    if os.path.exists("assets"):
+        app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+    if os.path.exists("public/js"):
+        app.mount("/js", StaticFiles(directory="public/js"), name="js")
+    if os.path.exists("public/css"):
+        app.mount("/css", StaticFiles(directory="public/css"), name="css")
+    # Add data directory for CSV files
+    if os.path.exists("assets/data"):
+        app.mount("/data", StaticFiles(directory="assets/data"), name="data")
+except Exception as e:
+    logger.warning(f"Some static directories not found: {e}")
 
 # Initialize services
 skill_ontology = SkillOntology()

@@ -37,6 +37,7 @@ class FileConverter {
         this.uploadAttempts = 0;
         this.currentExperiencePage = 1;
         this.stressMessageShown = false;
+        this.isProcessing = false;
         // Initialize services with error handling and fallbacks
         try {
             this.piiDetector = new CareerFocusedPIIDetector();
@@ -359,6 +360,14 @@ class FileConverter {
     }
 
     async processFile(file) {
+        // Check if already processing to prevent double load
+        if (this.isProcessing) {
+            console.log('[DEBUG] Already processing file, ignoring duplicate request');
+            return;
+        }
+        
+        this.isProcessing = true;
+        
         try {
             console.log('[DEBUG] Starting file processing for:', file.name);
             this.hideMessages();
@@ -490,6 +499,7 @@ class FileConverter {
             this.updateStep(1);
             this.uploadArea.style.display = 'block';
         } finally {
+            this.isProcessing = false;
             this.hideProgress();
         }
     }
@@ -520,6 +530,21 @@ class FileConverter {
         }
     }
 
+    async extractPageText(pdf, pageNumber) {
+        try {
+            const page = await pdf.getPage(pageNumber);
+            const textContent = await page.getTextContent();
+            
+            return textContent.items
+                .map(item => item.str)
+                .join(' ')
+                .trim();
+        } catch (error) {
+            console.warn(`Failed to extract text from page ${pageNumber}:`, error);
+            return '';
+        }
+    }
+
     async extractFromPDF(file) {
         try {
             this.updateProgress(10, 'Loading PDF...');
@@ -535,20 +560,38 @@ class FileConverter {
             const numPages = pdf.numPages;
             let fullText = '';
 
-            for (let i = 1; i <= numPages; i++) {
-                this.updateProgress(20 + (60 * (i - 1) / numPages), `Extracting text from page ${i} of ${numPages}...`);
+            // Process pages in batches for better performance
+            const batchSize = 3;
+            let pageIndex = 1;
+            
+            while (pageIndex <= numPages) {
+                const batchPromises = [];
+                const batchEnd = Math.min(pageIndex + batchSize - 1, numPages);
                 
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                
-                const pageText = textContent.items
-                    .map(item => item.str)
-                    .join(' ')
-                    .trim();
-                
-                if (pageText) {
-                    fullText += `${pageText}\n\n`;
+                for (let i = pageIndex; i <= batchEnd; i++) {
+                    batchPromises.push(this.extractPageText(pdf, i));
                 }
+                
+                const batchResults = await Promise.all(batchPromises);
+                
+                for (let i = 0; i < batchResults.length; i++) {
+                    const pageText = batchResults[i];
+                    const currentPage = pageIndex + i;
+                    
+                    this.updateProgress(20 + (60 * (currentPage - 1) / numPages), `Extracting text from page ${currentPage} of ${numPages}...`);
+                    
+                    if (pageText) {
+                        fullText += `${pageText}\n\n`;
+                        
+                        // Show preview of found content for trust
+                        if (currentPage === 1 && pageText.length > 50) {
+                            const preview = pageText.substring(0, 100).replace(/\s+/g, ' ').trim();
+                            this.updateProgress(20 + (60 * (currentPage - 1) / numPages), `Found content: "${preview}..."`);
+                        }
+                    }
+                }
+                
+                pageIndex = batchEnd + 1;
             }
 
             this.updateProgress(90, 'Finalizing text extraction...');
@@ -584,13 +627,19 @@ class FileConverter {
             this.updateProgress(30, 'Parsing Word document structure...');
             
             const result = await mammoth.extractRawText({ arrayBuffer });
-            this.updateProgress(80, 'Extracting text content...');
+            this.updateProgress(60, 'Extracting text content...');
             
             if (result.messages && result.messages.length > 0) {
                 console.warn('Word document processing warnings:', result.messages);
             }
 
             const text = result.value.trim();
+            
+            // Show preview of found content for trust
+            if (text.length > 50) {
+                const preview = text.substring(0, 100).replace(/\s+/g, ' ').trim();
+                this.updateProgress(80, `Found content: "${preview}..."`);
+            }
             
             if (!text) {
                 throw new Error('No text content found in Word document. The document might be empty.');
@@ -665,8 +714,17 @@ class FileConverter {
     }
 
     updateProgress(percentage, message) {
-        this.progressFill.style.width = percentage + '%';
-        this.progressText.textContent = message;
+        // Throttle progress updates to avoid excessive DOM operations
+        if (this.lastProgressUpdate && Date.now() - this.lastProgressUpdate < 100) {
+            return;
+        }
+        this.lastProgressUpdate = Date.now();
+        
+        // Use requestAnimationFrame for smooth updates
+        requestAnimationFrame(() => {
+            this.progressFill.style.width = percentage + '%';
+            this.progressText.textContent = message;
+        });
     }
 
     hideProgress() {
@@ -1322,108 +1380,170 @@ class FileConverter {
     }
     
     generateExperienceCard(exp, index) {
-        const skillTags = (exp.skills || []).slice(0, 5).map(skill => {
-            const skillType = this.categorizeSkill(skill);
-            return `<span class="skill-tag ${skillType}">${skill}</span>`;
-        }).join('');
-        
         const startDate = exp.startDate || '';
         const endDate = exp.endDate || 'Present';
         const duration = exp.duration || this.calculateDuration(startDate, endDate);
         
-        const redactedCompany = this.redactionState?.entities?.companies?.get(exp.company) !== false ? 
-            '[Private Company]' : exp.company;
+        // Improved redaction messaging for trust
+        const isCompanyRedacted = this.redactionState?.entities?.companies?.get(exp.company) !== false;
+        const companyDisplay = isCompanyRedacted ? 
+            `<span class="company-protected" title="Your privacy is protected">
+                <span class="protection-icon">🔒</span> Company name protected for your privacy
+            </span>` : 
+            exp.company || 'Company';
         
         const redactedTitle = this.applyRedaction(exp.title || 'Professional Role', 'experience');
         const redactedDescription = (exp.description || []).map(desc => 
             this.applyRedaction(desc, 'experience')
         );
         
+        // Show only 2 achievements initially for cognitive ease
+        const initialAchievements = redactedDescription.slice(0, 2);
+        const remainingCount = redactedDescription.length - 2;
+        
+        // Responsive classes based on screen size
+        const responsiveClass = this.getResponsiveClass();
+        
         return `
-            <div class="experience-card" data-experience-index="${index}">
-                <div class="experience-header">
-                    <div class="experience-title-group">
-                        <div class="experience-title" title="${exp.title || 'Professional Role'}">${redactedTitle}</div>
-                        <div class="experience-company-wrapper">
-                            <div class="experience-company">
-                                <span id="company-${index}" style="display: none;" title="${exp.company || 'Company'}">${exp.company || 'Company'}</span>
-                                <span id="company-redacted-${index}" title="Company name hidden for privacy">${redactedCompany}</span>
-                            </div>
-                            <button 
-                                id="company-toggle-${index}"
-                                onclick="window.fileConverter.toggleCompanyVisibility(${index})"
-                                title="Click to show/hide company name"
-                                class="redaction-toggle-btn"
-                                aria-label="Toggle company name visibility">
-                                <span class="toggle-icon">👁️</span>
-                                <span class="toggle-text sr-only">Show</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="experience-duration" title="Employment duration">
-                        <span class="duration-text">${duration}</span>
-                        ${startDate && endDate ? `<span class="date-range">${startDate} - ${endDate}</span>` : ''}
+            <div class="experience-card ${responsiveClass}" data-experience-index="${index}">
+                <header class="company-header">
+                    <h2 class="company-name">
+                        <span id="company-${index}" style="display: ${isCompanyRedacted ? 'none' : 'inline'};" 
+                              title="${exp.company || 'Company'}">${exp.company || 'Company'}</span>
+                        <span id="company-redacted-${index}" 
+                              style="display: ${isCompanyRedacted ? 'inline' : 'none'};">${companyDisplay}</span>
+                        <button 
+                            id="company-toggle-${index}"
+                            onclick="window.fileConverter.toggleCompanyVisibility(${index})"
+                            title="Toggle company name visibility"
+                            class="redaction-toggle-btn"
+                            aria-label="Toggle company name visibility"
+                            tabindex="0">
+                            <span class="toggle-icon" aria-hidden="true">👁️</span>
+                            <span class="sr-only">Toggle visibility</span>
+                        </button>
+                    </h2>
+                </header>
+                
+                <div class="role-info">
+                    <h3 class="role-title">${redactedTitle}</h3>
+                    <div class="role-duration" title="Employment period">
+                        ${startDate && endDate ? `${startDate} - ${endDate}` : duration}
                     </div>
                 </div>
                 
-                <div class="experience-achievements-wrapper">
-                    <ul class="experience-achievements" id="achievements-${index}">
-                        ${redactedDescription.slice(0, 3).map((desc, descIndex) => `
-                            <li class="achievement-item" data-index="${descIndex}">
-                                <span class="achievement-bullet">•</span>
+                <div class="achievements-section" role="region" aria-label="Key achievements">
+                    <ul class="achievements-list" id="achievements-${index}" role="list">
+                        ${initialAchievements.map((desc, i) => `
+                            <li class="achievement-item" role="listitem">
+                                <span class="bullet" aria-hidden="true">•</span>
                                 <span class="achievement-text">${desc}</span>
                             </li>
                         `).join('')}
-                        ${redactedDescription.length > 3 ? `
-                            <li class="show-more-item">
-                                <button onclick="window.fileConverter.toggleAchievements(${index}, true)" 
-                                        class="show-more-btn" 
-                                        aria-label="Show all achievements">
-                                    <span class="expand-icon">▼</span>
-                                    <span class="expand-text">Show ${redactedDescription.length - 3} more achievement${redactedDescription.length - 3 > 1 ? 's' : ''}</span>
-                                </button>
-                            </li>
-                        ` : ''}
                     </ul>
                     
-                    ${redactedDescription.length > 3 ? `
-                        <ul class="experience-achievements-extended" id="achievements-extended-${index}" style="display: none;">
-                            ${redactedDescription.map((desc, descIndex) => `
-                                <li class="achievement-item" data-index="${descIndex}">
-                                    <span class="achievement-bullet">•</span>
+                    ${remainingCount > 0 ? `
+                        <ul class="achievements-list-extended" 
+                            id="achievements-extended-${index}" 
+                            style="display: none; opacity: 0; transition: opacity 0.3s ease;"
+                            role="list">
+                            ${redactedDescription.map((desc, i) => `
+                                <li class="achievement-item" role="listitem">
+                                    <span class="bullet" aria-hidden="true">•</span>
                                     <span class="achievement-text">${desc}</span>
                                 </li>
                             `).join('')}
-                            <li class="show-less-item">
-                                <button onclick="window.fileConverter.toggleAchievements(${index}, false)" 
-                                        class="show-less-btn" 
-                                        aria-label="Show fewer achievements">
-                                    <span class="collapse-icon">▲</span>
-                                    <span class="collapse-text">Show less</span>
-                                </button>
-                            </li>
                         </ul>
-                    ` : ''}
-                </div>
-                
-                ${skillTags ? `
-                    <div class="experience-skills">
-                        <div class="skills-label">Key Skills:</div>
-                        <div class="skills-tags">${skillTags}</div>
-                        ${(exp.skills || []).length > 5 ? `
-                            <button class="skills-show-more" onclick="window.fileConverter.toggleSkills(${index})" title="View all skills">
-                                +${(exp.skills || []).length - 5} more
+                        
+                        <div class="toggle-container">
+                            <button onclick="window.fileConverter.toggleAchievementsImproved(${index}, true)" 
+                                    class="expand-btn" 
+                                    id="expand-${index}"
+                                    aria-expanded="false"
+                                    aria-controls="achievements-extended-${index}"
+                                    aria-label="Show ${remainingCount} more achievements">
+                                <span class="expand-icon" aria-hidden="true">▼</span>
+                                <span class="expand-text">Show ${remainingCount} more achievement${remainingCount > 1 ? 's' : ''}</span>
                             </button>
-                        ` : ''}
-                    </div>
-                ` : ''}
-                
-                <div class="experience-metadata">
-                    <div class="experience-type-badge ${this.getEmploymentType(exp.type)}">${exp.type || 'Full-time'}</div>
-                    ${exp.location ? `<div class="experience-location" title="Work location">${this.applyRedaction(exp.location, 'location')}</div>` : ''}
+                            <button onclick="window.fileConverter.toggleAchievementsImproved(${index}, false)" 
+                                    class="collapse-btn" 
+                                    id="collapse-${index}"
+                                    style="display: none;"
+                                    aria-expanded="true"
+                                    aria-controls="achievements-extended-${index}"
+                                    aria-label="Show fewer achievements">
+                                <span class="collapse-icon" aria-hidden="true">▲</span>
+                                <span class="collapse-text">Show less</span>
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
+    }
+    
+    /**
+     * Get responsive CSS class based on viewport
+     */
+    getResponsiveClass() {
+        if (typeof window === 'undefined') return '';
+        
+        const width = window.innerWidth;
+        if (width < 768) return 'mobile-optimized';
+        if (width < 1024) return 'tablet-optimized';
+        return 'desktop-optimized';
+    }
+    
+    /**
+     * Improved achievements toggle with smooth animations and accessibility
+     */
+    toggleAchievementsImproved(index, expand) {
+        const shortList = document.getElementById(`achievements-${index}`);
+        const expandedList = document.getElementById(`achievements-extended-${index}`);
+        const expandBtn = document.getElementById(`expand-${index}`);
+        const collapseBtn = document.getElementById(`collapse-${index}`);
+        
+        if (!shortList || !expandedList || !expandBtn || !collapseBtn) return;
+        
+        if (expand) {
+            // Show expanded list with smooth transition
+            expandedList.style.display = 'block';
+            setTimeout(() => {
+                expandedList.style.opacity = '1';
+            }, 10);
+            
+            // Hide short list and expand button
+            shortList.style.display = 'none';
+            expandBtn.style.display = 'none';
+            collapseBtn.style.display = 'inline-flex';
+            
+            // Update ARIA states
+            expandBtn.setAttribute('aria-expanded', 'true');
+            collapseBtn.setAttribute('aria-expanded', 'true');
+            
+            // Smooth scroll to ensure visibility
+            expandedList.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest',
+                inline: 'nearest'
+            });
+            
+        } else {
+            // Hide expanded list with smooth transition
+            expandedList.style.opacity = '0';
+            setTimeout(() => {
+                expandedList.style.display = 'none';
+            }, 300);
+            
+            // Show short list and expand button
+            shortList.style.display = 'block';
+            expandBtn.style.display = 'inline-flex';
+            collapseBtn.style.display = 'none';
+            
+            // Update ARIA states
+            expandBtn.setAttribute('aria-expanded', 'false');
+            collapseBtn.setAttribute('aria-expanded', 'false');
+        }
     }
     
     // Enhanced experience section methods
@@ -1454,16 +1574,22 @@ class FileConverter {
     toggleAchievements(index, showMore) {
         const achievements = document.getElementById(`achievements-${index}`);
         const extended = document.getElementById(`achievements-extended-${index}`);
+        const showMoreBtn = document.getElementById(`show-more-${index}`);
+        const showLessBtn = document.getElementById(`show-less-${index}`);
         
-        if (achievements && extended) {
+        if (achievements && extended && showMoreBtn && showLessBtn) {
             if (showMore) {
                 achievements.style.display = 'none';
                 extended.style.display = 'block';
+                showMoreBtn.style.display = 'none';
+                showLessBtn.style.display = 'inline-block';
                 // Smooth scroll to ensure content is visible
                 extended.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } else {
                 extended.style.display = 'none';
                 achievements.style.display = 'block';
+                showLessBtn.style.display = 'none';
+                showMoreBtn.style.display = 'inline-block';
             }
         }
     }
@@ -4237,6 +4363,62 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         window.fileConverter = new FileConverter();
         console.log('Career Resilience Platform initialized successfully');
+        
+        // Create bridge for debug system integration
+        window.handleUploadSuccess = async (data, fileName) => {
+            console.log('[BRIDGE] handleUploadSuccess called with:', fileName);
+            if (window.fileConverter) {
+                try {
+                    // Check if already processing to prevent double load
+                    if (window.fileConverter.isProcessing) {
+                        console.log('[BRIDGE] Already processing, skipping duplicate call');
+                        return;
+                    }
+                    
+                    // Set processing flag
+                    window.fileConverter.isProcessing = true;
+                    
+                    // Set the extracted text and filename
+                    window.fileConverter.extractedText = data;
+                    window.fileConverter.currentFileName = fileName;
+                    
+                    // Check if we already have parsed data to avoid re-parsing
+                    if (!window.fileConverter.parsedResumeData) {
+                        // Parse the resume data
+                        const parsedData = await window.fileConverter.enhancedResumeParser.parseResumeSecurely(data, fileName);
+                        window.fileConverter.parsedResumeData = parsedData;
+                    }
+                    
+                    // Initialize redaction state
+                    if (!window.fileConverter.redactionState) {
+                        window.fileConverter.redactionState = {
+                            personalInfo: {
+                                name: true,
+                                email: true,
+                                phone: true,
+                                address: true
+                            },
+                            entities: {
+                                companies: new Map(),
+                                schools: new Map(),
+                                locations: new Map()
+                            }
+                        };
+                    }
+                    
+                    // Proceed to analysis
+                    await window.fileConverter.proceedToAnalysis();
+                    console.log('[BRIDGE] Analysis completed successfully');
+                    
+                } catch (error) {
+                    console.error('[BRIDGE] Error processing file:', error);
+                    window.fileConverter.showError('Failed to process file: ' + error.message);
+                } finally {
+                    // Reset processing flag
+                    window.fileConverter.isProcessing = false;
+                }
+            }
+        };
     } catch (error) {
         console.error('Failed to initialize application:', error);
         

@@ -155,19 +155,18 @@ class DebugLogger {
             this.log('DEBUG', 'File input found, setting up monitoring');
             
             fileInput.addEventListener('change', (event) => {
-                this.log('DEBUG', 'File input change event:', event.target.files);
+                this.log('DEBUG', 'File input change event detected - main handler should process');
                 if (event.target.files.length > 0) {
                     const file = event.target.files[0];
                     this.updateStatus('uploadStatus', `Selected: ${file.name}`, 'info');
-                    this.log('INFO', 'File selected:', {
+                    this.log('INFO', 'File selected (debug monitoring only):', {
                         name: file.name,
                         size: file.size,
                         type: file.type,
                         lastModified: new Date(file.lastModified)
                     });
                     
-                    // Trigger file processing
-                    this.processFile(file);
+                    // NO PROCESSING - Let main FileConverter handle it
                 }
             });
 
@@ -190,43 +189,35 @@ class DebugLogger {
      * Setup drag and drop functionality
      */
     setupDragAndDrop(uploadArea, fileInput) {
-        uploadArea.addEventListener('click', () => {
-            this.log('DEBUG', 'Upload area clicked, triggering file input');
-            fileInput.click();
-        });
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-            this.log('DEBUG', 'Drag over upload area');
-        });
-
-        uploadArea.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            this.log('DEBUG', 'Drag leave upload area');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            
-            const files = e.dataTransfer.files;
-            this.log('DEBUG', 'Files dropped:', files);
-            
-            if (files.length > 0) {
-                const file = files[0];
-                this.updateStatus('uploadStatus', `Dropped: ${file.name}`, 'info');
-                this.log('INFO', 'File dropped:', {
+        // DEBUG LOGGER: OBSERVE ONLY - Don't interfere with file handling
+        // Let the main FileConverter handle all actual file processing
+        
+        this.log('DEBUG', 'Debug logger monitoring file upload events (non-interfering mode)');
+        
+        // Monitor file input changes for logging only
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                this.log('INFO', 'File selected via input:', {
                     name: file.name,
                     size: file.size,
                     type: file.type
                 });
-                
-                // Set the file input value and trigger processing
-                fileInput.files = files;
-                this.processFile(file);
+                this.updateStatus('uploadStatus', `Selected: ${file.name}`, 'info');
             }
+        });
+        
+        // Monitor events for logging only (no preventDefault, no handling)
+        uploadArea.addEventListener('dragover', () => {
+            this.log('DEBUG', 'Drag over detected');
+        });
+        
+        uploadArea.addEventListener('drop', () => {
+            this.log('DEBUG', 'Drop detected - main handler should process');
+        });
+        
+        uploadArea.addEventListener('click', () => {
+            this.log('DEBUG', 'Upload area clicked - main handler should respond');
         });
     }
 
@@ -268,63 +259,9 @@ class DebugLogger {
     }
 
     /**
-     * Process uploaded file
+     * DEBUG LOGGER: File processing removed
+     * All file processing now handled by main FileConverter only
      */
-    async processFile(file) {
-        try {
-            this.log('INFO', 'Starting file processing:', file.name);
-            this.updateStatus('uploadStatus', 'Processing...', 'warning');
-
-            // Validate file type
-            const validTypes = ['.pdf', '.txt', '.docx'];
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            
-            if (!validTypes.includes(fileExtension)) {
-                throw new Error(`Invalid file type: ${fileExtension}. Supported: ${validTypes.join(', ')}`);
-            }
-
-            // Check file size (max 10MB)
-            const maxSize = 10 * 1024 * 1024;
-            if (file.size > maxSize) {
-                throw new Error(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB. Max: 10MB`);
-            }
-
-            // Read file content
-            let fileContent = '';
-            
-            if (fileExtension === '.txt') {
-                fileContent = await this.readTextFile(file);
-            } else if (fileExtension === '.pdf') {
-                fileContent = await this.readPDFFile(file);
-            } else if (fileExtension === '.docx') {
-                fileContent = await this.readDocxFile(file);
-            }
-
-            this.log('INFO', 'File content extracted:', {
-                length: fileContent.length,
-                preview: fileContent.substring(0, 200) + '...'
-            });
-
-            // Trigger existing upload handler if available
-            if (window.handleUploadSuccess) {
-                this.log('DEBUG', 'Calling existing upload handler');
-                window.handleUploadSuccess(fileContent, file.name);
-            } else if (window.handleFileUpload) {
-                this.log('DEBUG', 'Calling handleFileUpload');
-                window.handleFileUpload(fileContent, file.name);
-            } else {
-                this.log('WARN', 'No upload handler found, displaying content');
-                this.displayFileContent(fileContent, file.name);
-            }
-
-            this.updateStatus('uploadStatus', 'Complete ✓', 'success');
-
-        } catch (error) {
-            this.log('ERROR', 'File processing failed:', error.message);
-            this.updateStatus('uploadStatus', 'Failed ✗', 'error');
-            this.showError('File processing failed: ' + error.message);
-        }
-    }
 
     /**
      * Read text file

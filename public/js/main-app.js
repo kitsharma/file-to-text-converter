@@ -91,139 +91,21 @@ class CareerResilienceApp {
     }
 
     /**
-     * Setup direct file handling if no existing handlers found
+     * CAREER APP: File handling removed to prevent conflicts
+     * All file processing now handled by main FileConverter only
      */
     setupDirectFileHandling(fileInput, uploadArea) {
-        console.log('[CAREER-APP] Setting up direct file handling');
+        console.log('[CAREER-APP] Monitoring only - no file handling interference');
         
-        // Check if file input already has change listeners
-        const hasListeners = fileInput._hasCareerListeners;
-        if (hasListeners) {
-            console.log('[CAREER-APP] File input already has career listeners');
-            return;
-        }
-
-        // Mark that we've added listeners
-        fileInput._hasCareerListeners = true;
-
-        // Add file change handler
-        fileInput.addEventListener('change', async (event) => {
-            console.log('[CAREER-APP] Direct file change event:', event.target.files);
-            
-            if (event.target.files.length > 0) {
-                const file = event.target.files[0];
-                console.log('[CAREER-APP] File selected directly:', file.name);
-                
-                try {
-                    const content = await this.readFileContent(file);
-                    window.handleUploadSuccess(content, file.name);
-                } catch (error) {
-                    console.error('[CAREER-APP] Error reading file:', error);
-                    this.showError('Failed to read file: ' + error.message);
-                }
-            }
-        });
-
-        // Setup drag and drop if upload area exists
-        if (uploadArea) {
-            console.log('[CAREER-APP] Setting up drag and drop on upload area');
-            
-            uploadArea.addEventListener('click', () => {
-                console.log('[CAREER-APP] Upload area clicked');
-                fileInput.click();
-            });
-
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                console.log('[CAREER-APP] Files dropped:', files);
-                
-                if (files.length > 0) {
-                    // Set the files and trigger change event
-                    fileInput.files = files;
-                    fileInput.dispatchEvent(new Event('change'));
-                }
-            });
-        }
+        // Main FileConverter handles all file operations
+        // Career app will hook into results via handleUploadSuccess bridge
+        return;
     }
 
     /**
-     * Read file content based on file type
+     * CAREER APP: File reading methods removed
+     * All file processing now handled by main FileConverter only
      */
-    async readFileContent(file) {
-        const extension = file.name.toLowerCase().split('.').pop();
-        console.log('[CAREER-APP] Reading file type:', extension);
-        
-        switch (extension) {
-            case 'txt':
-                return await this.readTextFile(file);
-            case 'pdf':
-                return await this.readPDFFile(file);
-            case 'docx':
-                return await this.readDocxFile(file);
-            default:
-                throw new Error(`Unsupported file type: ${extension}`);
-        }
-    }
-
-    /**
-     * Read text file
-     */
-    readTextFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = (e) => reject(new Error('Failed to read text file'));
-            reader.readAsText(file);
-        });
-    }
-
-    /**
-     * Read PDF file using PDF.js
-     */
-    async readPDFFile(file) {
-        if (!window.pdfjsLib) {
-            throw new Error('PDF.js library not loaded');
-        }
-
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        
-        let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(' ');
-            fullText += pageText + '\n';
-        }
-        
-        return fullText;
-    }
-
-    /**
-     * Read DOCX file using Mammoth
-     */
-    async readDocxFile(file) {
-        if (!window.mammoth) {
-            throw new Error('Mammoth library not loaded');
-        }
-
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        return result.value;
-    }
 
     /**
      * Show error message
@@ -562,14 +444,24 @@ class CareerResilienceApp {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait for other scripts to load
+    // Wait for other scripts to load, especially the main FileConverter
     setTimeout(() => {
         if (window.CareerAPIClient && window.CareerInsightsManager && window.CareerInsightsUI) {
+            console.log('[CAREER-APP] Initializing career app integration');
             window.careerApp = new CareerResilienceApp();
         } else {
-            console.error('Required career modules not loaded');
+            console.warn('[CAREER-APP] Some career modules not loaded, will retry');
+            // Retry after a longer delay
+            setTimeout(() => {
+                if (window.CareerAPIClient && window.CareerInsightsManager && window.CareerInsightsUI) {
+                    console.log('[CAREER-APP] Initializing career app integration (retry)');
+                    window.careerApp = new CareerResilienceApp();
+                } else {
+                    console.error('[CAREER-APP] Required career modules not loaded after retry');
+                }
+            }, 2000);
         }
-    }, 1000);
+    }, 1500); // Increased delay to let FileConverter initialize first
 });
 
 // Export for manual initialization if needed
