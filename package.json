@@ -1,0 +1,50 @@
+{
+  "name": "file-to-text-converter",
+  "version": "1.0.0",
+  "description": "Client-side file to text conversion module for browsers. Supports TXT, MD, CSV, JSON, PDF, and Word documents.",
+  "main": "dist/FileToTextConverter.js",
+  "module": "dist/FileToTextConverter.esm.js",
+  "types": "types/FileToTextConverter.d.ts",
+  "files": [
+    "dist",
+    "types",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "node build.js",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir types",
+    "test": "jest",
+    "clean": "rm -rf dist types"
+  },
+  "keywords": [
+    "file-converter",
+    "text-extraction",
+    "pdf-to-text",
+    "docx-to-text",
+    "client-side",
+    "browser",
+    "file-upload"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "pdfjs-dist": "^3.11.174",
+    "mammoth": "^1.6.0"
+  },
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    },
+    "mammoth": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,21 @@
+node_modules/
+dist/
+types/
+*.log
+.DS_Store
+.env
+.env.local
+.env.production
+.env.development
+
+# Test output directory
+tmp/
+
+# AI Development Archetypes - Session methodology only
+src/AIDevArchetypes.ts
+src/PDLCAuditChecklist.ts
+src/TRAPProtocol.ts
+src/index.ts
+examples/ai-dev-toolkit-example.js
+examples/claude-integration-example.js
+__tests__/AIDevToolkit.test.js
