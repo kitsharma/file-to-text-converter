@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # File to Text Converter
 
 A lightweight, client-side module for converting various file types to plain text in the browser. No server required!
@@ -253,3 +254,7 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 - Debug mode
 - Comprehensive error handling
 - TypeScript support
+=======
+# file-to-text-converter
+Client-side file processing platform that converts any PDF/DOCX/TXT files to plain text using JavaScript libraries   (PDF.js, Mammoth.js).
+>>>>>>> d03ce45433d6e0525b618ca35f1d30a1efefac33
