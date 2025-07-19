@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Upload with PII Redaction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+        }
+        .upload-area.drag-over {
+            background: #e0e0e0;
+            border-color: #666;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            display: none;
+        }
+        .controls button {
+            margin: 0 5px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #0056b3;
+        }
+        .content-area {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .panel {
+            flex: 1;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 600px;
+            overflow-y: auto;
+            display: none;
+        }
+        .panel h3 {
+            margin-top: 0;
+            font-family: Arial, sans-serif;
+        }
+        .highlight {
+            background-color: yellow;
+            padding: 2px;
+        }
+        .redacted {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 2px;
+        }
+        .stats {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>Resume Upload with PII Redaction</h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" accept=".txt,.pdf,.docx" style="display: none;">
+        <p>Drag & drop your resume here or <button onclick="document.getElementById('fileInput').click()">browse</button></p>
+        <p>Supported: TXT, PDF, DOCX</p>
+    </div>
+    
+    <div class="controls" id="controls">
+        <button id="redactBtn">🔒 Redact PII</button>
+        <button id="exportOriginalBtn">💾 Export Original</button>
+        <button id="exportBtn" style="display: none;">💾 Export Redacted</button>
+        <button id="resetBtn">🔄 Reset</button>
+        <div style="margin: 10px 0;">
+            <label><input type="checkbox" id="redactEmails" checked> Redact Emails</label>
+            <label><input type="checkbox" id="redactPhones" checked> Redact Phone Numbers</label>
+            <label><input type="checkbox" id="redactSSNs" checked> Redact SSNs</label>
+            <label><input type="checkbox" id="redactAddresses" checked> Redact Addresses</label>
+        </div>
+        <label style="margin-left: 20px;">
+            <input type="checkbox" id="showOriginal" checked> Show Original
+        </label>
+    </div>
+
+    <div class="content-area">
+        <div class="panel" id="originalPanel">
+            <h3>Original Content</h3>
+            <div id="originalContent"></div>
+            <div class="stats" id="originalStats"></div>
+        </div>
+        
+        <div class="panel" id="redactedPanel">
+            <h3>Redacted Content</h3>
+            <div id="redactedContent"></div>
+            <div class="stats" id="redactedStats"></div>
+        </div>
+    </div>
+
+    <!-- Load PDF.js for PDF support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    
+    <!-- Load JSZip for DOCX parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- Load mammoth for DOCX support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <script type="module">
+        import { FileToTextConverter } from '../src/FileToTextConverter.simple.js';
+        import { PIIRedactor } from '../src/PIIRedactor.js';
+        
+        const converter = new FileToTextConverter();
+        const redactor = new PIIRedactor();
+        
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const controls = document.getElementById('controls');
+        const originalPanel = document.getElementById('originalPanel');
+        const redactedPanel = document.getElementById('redactedPanel');
+        const originalContent = document.getElementById('originalContent');
+        const redactedContent = document.getElementById('redactedContent');
+        const originalStats = document.getElementById('originalStats');
+        const redactedStats = document.getElementById('redactedStats');
+        
+        let currentText = '';
+        let currentFileName = '';
+        let redactedText = '';
+        
+        // File input handler
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                await handleFile(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                await handleFile(files[0]);
+            }
+        });
+        
+        // Button handlers
+        document.getElementById('redactBtn').addEventListener('click', performRedaction);
+        document.getElementById('exportOriginalBtn').addEventListener('click', exportOriginal);
+        document.getElementById('exportBtn').addEventListener('click', exportRedacted);
+        document.getElementById('resetBtn').addEventListener('click', reset);
+        document.getElementById('showOriginal').addEventListener('change', (e) => {
+            originalPanel.style.display = e.target.checked ? 'block' : 'none';
+        });
+        
+        async function handleFile(file) {
+            try {
+                console.log('Handling file:', file.name, file.type, file.size);
+                originalContent.textContent = 'Processing file...';
+                controls.style.display = 'block';
+                originalPanel.style.display = 'block';
+                
+                currentFileName = file.name;
+                currentText = await converter.convertToText(file);
+                
+                displayOriginal();
+                
+                // Don't automatically redact - let user choose
+                
+            } catch (error) {
+                console.error('File processing error:', error);
+                originalContent.textContent = `Error: ${error.message}`;
+                originalContent.style.color = 'red';
+            }
+        }
+        
+        function displayOriginal() {
+            originalContent.textContent = currentText;
+            
+            // Calculate stats
+            const lines = currentText.split('\n').length;
+            const words = currentText.split(/\s+/).filter(w => w.length > 0).length;
+            const chars = currentText.length;
+            
+            originalStats.innerHTML = `
+                <strong>File:</strong> ${currentFileName}<br>
+                <strong>Stats:</strong> ${lines} lines, ${words} words, ${chars} characters
+            `;
+        }
+        
+        function performRedaction() {
+            // Get user preferences
+            const redactEmails = document.getElementById('redactEmails').checked;
+            const redactPhones = document.getElementById('redactPhones').checked;
+            const redactSSNs = document.getElementById('redactSSNs').checked;
+            const redactAddresses = document.getElementById('redactAddresses').checked;
+            
+            // Start with original text
+            redactedText = currentText;
+            
+            // Apply selective redaction
+            if (redactEmails) {
+                redactedText = redactedText.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL_REDACTED]');
+            }
+            if (redactPhones) {
+                redactedText = redactedText.replace(/(\(\d{3}\)\s\d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\d{10})/g, '[PHONE_REDACTED]');
+            }
+            if (redactSSNs) {
+                redactedText = redactedText.replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN_REDACTED]');
+            }
+            if (redactAddresses) {
+                redactedText = redactor.redactAddresses(redactedText);
+            }
+            
+            redactedContent.textContent = redactedText;
+            redactedPanel.style.display = 'block';
+            document.getElementById('exportBtn').style.display = 'inline-block';
+            
+            // Calculate redaction stats
+            const emailCount = redactEmails ? (currentText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g) || []).length : 0;
+            const phoneCount = redactPhones ? (currentText.match(/(\(\d{3}\)\s\d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\d{10})/g) || []).length : 0;
+            const ssnCount = redactSSNs ? (currentText.match(/\b\d{3}-\d{2}-\d{4}\b/g) || []).length : 0;
+            const addressCount = redactAddresses ? redactor.getDetectedAddresses(currentText).length : 0;
+            
+            redactedStats.innerHTML = `
+                <strong>Redacted:</strong><br>
+                📧 ${emailCount} email(s)<br>
+                📱 ${phoneCount} phone number(s)<br>
+                🔢 ${ssnCount} SSN(s)<br>
+                📍 ${addressCount} address(es)
+            `;
+            
+            highlightRedactions();
+        }
+        
+        function highlightRedactions() {
+            // Highlight redacted parts in the redacted content
+            let highlighted = redactedContent.textContent;
+            highlighted = highlighted.replace(/\[(.*?)_REDACTED\]/g, '<span class="redacted">[$1_REDACTED]</span>');
+            redactedContent.innerHTML = highlighted;
+        }
+        
+        function exportOriginal() {
+            const blob = new Blob([currentText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName.replace(/\.[^/.]+$/, '') + '_original.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function exportRedacted() {
+            const blob = new Blob([redactedText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName.replace(/\.[^/.]+$/, '') + '_redacted.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function reset() {
+            currentText = '';
+            currentFileName = '';
+            redactedText = '';
+            controls.style.display = 'none';
+            originalPanel.style.display = 'none';
+            redactedPanel.style.display = 'none';
+            fileInput.value = '';
+        }
+        
+        console.log('PII Redaction interface ready');
+    </script>
+</body>
+</html>

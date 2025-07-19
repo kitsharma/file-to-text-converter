@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Forensic Test</title>
+</head>
+<body>
+    <h1>Forensic Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        async function forensicTest() {
+            const log = (msg, error = false) => {
+                const p = document.createElement('p');
+                p.style.color = error ? 'red' : 'black';
+                p.textContent = msg;
+                results.appendChild(p);
+            };
+            
+            try {
+                // TEST 1: Can we load the ESM module?
+                log('TEST 1: Loading FileToTextConverter ESM...');
+                const ftcModule = await import('../dist/FileToTextConverter.esm.js');
+                log('✓ FileToTextConverter loaded. Exports: ' + Object.keys(ftcModule).join(', '));
+                
+                // TEST 2: Can we instantiate it?
+                log('TEST 2: Creating FileToTextConverter instance...');
+                const converter = new ftcModule.FileToTextConverter();
+                log('✓ Instance created successfully');
+                
+                // TEST 3: Can we load CareerWizard?
+                log('TEST 3: Loading CareerWizard...');
+                const cwModule = await import('../src/CareerWizard.js');
+                log('✓ CareerWizard loaded. Exports: ' + Object.keys(cwModule).join(', '));
+                
+                // TEST 4: Create a test container and wizard
+                log('TEST 4: Creating CareerWizard instance...');
+                const testDiv = document.createElement('div');
+                testDiv.id = 'test-wizard';
+                document.body.appendChild(testDiv);
+                
+                const wizard = new cwModule.CareerWizard(testDiv, { debug: true });
+                log('✓ Wizard created');
+                
+                // TEST 5: Check if content was rendered
+                log('TEST 5: Checking rendered content...');
+                const content = testDiv.innerHTML;
+                log('Container HTML length: ' + content.length);
+                log('Contains "career-wizard" class: ' + content.includes('career-wizard'));
+                log('First 200 chars: ' + content.substring(0, 200) + '...');
+                
+            } catch (error) {
+                log('ERROR: ' + error.message, true);
+                log('Stack: ' + error.stack, true);
+            }
+        }
+        
+        forensicTest();
+    </script>
+</body>
+</html>

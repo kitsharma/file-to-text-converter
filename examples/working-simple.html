@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Upload - Working Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .upload-area.drag-over {
+            background: #e0e0e0;
+            border-color: #666;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Resume File Upload (Working Version)</h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" accept=".txt,.pdf,.docx" style="display: none;">
+        <p>Drag & drop your resume here or <button onclick="document.getElementById('fileInput').click()">browse</button></p>
+        <p>Supported: TXT, PDF, DOCX</p>
+    </div>
+    
+    <div id="result"></div>
+
+    <!-- Load PDF.js for PDF support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    
+    <!-- Load mammoth for DOCX support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <!-- Use the WORKING FileToTextConverter -->
+    <script type="module">
+        import { FileToTextConverter } from '../src/FileToTextConverter.simple.js';
+        
+        const converter = new FileToTextConverter();
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const result = document.getElementById('result');
+        
+        // File input handler
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                await handleFile(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                await handleFile(files[0]);
+            }
+        });
+        
+        async function handleFile(file) {
+            try {
+                console.log('Handling file:', file.name, file.type, file.size);
+                result.textContent = 'Processing file...';
+                result.style.display = 'block';
+                result.style.color = 'black';
+                
+                const text = await converter.convertToText(file);
+                
+                result.textContent = `File: ${file.name}\nSize: ${file.size} bytes\n\n--- CONTENT ---\n\n${text}`;
+            } catch (error) {
+                console.error('File processing error:', error);
+                result.textContent = `Error: ${error.message}`;
+                result.style.color = 'red';
+            }
+        }
+        
+        // Log that everything is initialized
+        console.log('File upload interface ready');
+    </script>
+</body>
+</html>

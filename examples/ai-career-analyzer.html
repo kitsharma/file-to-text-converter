@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Career Analyzer - Powered by Perplexity</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section h2 {
+            color: #333;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .upload-area.drag-over {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .upload-area button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .controls button {
+            margin: 0 8px 8px 0;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .controls button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .controls button.primary {
+            background: #667eea;
+            color: white;
+        }
+        .controls button.success {
+            background: #28a745;
+            color: white;
+        }
+        .controls button.danger {
+            background: #dc3545;
+            color: white;
+        }
+        .controls button.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .controls button.secondary, button.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        /* Debug Styles */
+        .debug-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .debug-tab {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .debug-tab.active {
+            background: white;
+            border-bottom-color: #007bff;
+            color: #007bff;
+        }
+        .debug-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .debug-panel h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .debug-panel pre {
+            background: #343a40;
+            color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            max-height: 400px;
+        }
+        
+        /* Job Results Styles */
+        .job-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 15px 0;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .job-header h4 {
+            margin: 0 0 5px 0;
+            color: #007bff;
+        }
+        .company {
+            font-weight: bold;
+            margin: 0 0 10px 0;
+        }
+        .job-meta {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+        .job-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .skills, .matching {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        #textDisplay {
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            min-height: 300px;
+            white-space: pre-wrap;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        /* Token styles */
+        .token {
+            cursor: pointer;
+            padding: 2px 0;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+        .token.normal:hover {
+            background-color: #f0f0f0;
+        }
+        .token.redacted-auto {
+            background-color: #ffebee;
+            color: #c62828;
+            border-bottom: 2px solid #c62828;
+        }
+        .token.redacted-address {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+            border-bottom: 2px solid #7b1fa2;
+        }
+        .token.redacted-manual {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            border-bottom: 2px solid #ef6c00;
+        }
+        
+        /* Skills section */
+        .skills-container {
+            display: none;
+        }
+        .skill-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 6px;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .skill-tag:hover {
+            background: #bbdefb;
+            transform: translateY(-1px);
+        }
+        .skill-tag.removing {
+            background: #ffcdd2;
+            border-color: #f44336;
+            animation: fadeOut 0.3s ease;
+        }
+        
+        /* Perplexity section - Crown Jewel */
+        .perplexity-container {
+            display: none;
+        }
+        .perplexity-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .perplexity-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .perplexity-loading {
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #666;
+        }
+        .status-message {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 10px 0;
+            color: #333;
+        }
+        .status-detail {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+        .perplexity-loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        .perplexity-content {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .perplexity-response {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .job-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        .job-title {
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 5px 0;
+        }
+        .job-company {
+            color: #666;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+        }
+        .job-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .skill-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .ai-tools {
+            background: #fff3e0;
+            color: #f57c00;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .search-metrics {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .search-metrics h4 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+        .perplexity-response h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        .perplexity-citations {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .perplexity-citations h5 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .citation {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+        }
+        .citation a {
+            color: #28a745;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .citation a:hover {
+            text-decoration: underline;
+        }
+        .perplexity-fallback {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .perplexity-fallback h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .query-preview {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .query-preview h5 {
+            margin: 0 0 10px 0;
+            font-family: sans-serif;
+            color: #333;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .indicator.auto { background-color: #ffebee; border: 2px solid #c62828; }
+        .indicator.address { background-color: #f3e5f5; border: 2px solid #7b1fa2; }
+        .indicator.manual { background-color: #fff3e0; border: 2px solid #ef6c00; }
+        
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .add-skill-container {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .add-skill-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .career-mapping {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .mapping-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .mapping-score {
+            float: right;
+            font-weight: bold;
+            color: #667eea;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+            cursor: default;
+            pointer-events: none;
+        }
+        .step.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .step.completed {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Career Analyzer</h1>
+            <p>Upload • Redact • Analyze • Discover with Perplexity AI</p>
+        </div>
+        
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <span>1️⃣</span>
+                <span>Upload Resume</span>
+            </div>
+            <div class="step" id="step2">
+                <span>2️⃣</span>
+                <span>Redact PII</span>
+            </div>
+            <div class="step" id="step3">
+                <span>3️⃣</span>
+                <span>Extract Skills</span>
+            </div>
+            <div class="step" id="step4">
+                <span>👑</span>
+                <span>AI Job Search</span>
+            </div>
+        </div>
+        
+        <!-- Step 1: Upload -->
+        <div class="section" id="uploadSection">
+            <h2>📁 Upload Resume</h2>
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".txt,.pdf,.docx" style="display: none;">
+                <p style="margin: 0 0 10px 0; font-size: 18px;">📄 Drag & drop your resume here or</p>
+                <button onclick="document.getElementById('fileInput').click()">Browse Files</button>
+                <p style="margin: 10px 0 0 0; color: #666;">Supported: TXT, PDF, DOCX (max 10MB)</p>
+            </div>
+        </div>
+        
+        <!-- Step 2: Redaction -->
+        <div class="section redaction-section" id="redactionSection" style="display: none;">
+            <h2>🔒 Privacy Protection</h2>
+            <div class="controls">
+                <div class="legend">
+                    <span class="legend-item">
+                        <span class="indicator auto"></span> Auto-detected PII
+                    </span>
+                    <span class="legend-item">
+                        <span class="indicator address"></span> Auto-detected Addresses
+                    </span>
+                    <span class="legend-item">
+                        <span class="indicator manual"></span> Manually redacted
+                    </span>
+                </div>
+                <div style="margin-top: 15px;">
+                    <label style="margin-right: 20px;">
+                        <input type="checkbox" id="addressToggle" checked> Address Detection
+                    </label>
+                    <button id="undoBtn" disabled>↶ Undo</button>
+                    <button id="redoBtn" disabled>↷ Redo</button>
+                    <button id="exportBtn" class="warning">💾 Export Redacted</button>
+                    <button id="analyzeSkillsBtn" class="success">✨ Analyze Skills</button>
+                </div>
+            </div>
+            
+            <div id="textDisplay"></div>
+            
+            <div class="summary" id="summary">
+                <span id="summaryText">Click any text to toggle redaction</span>
+            </div>
+        </div>
+        
+        <!-- Step 3: Skills Analysis -->
+        <div class="section skills-container" id="skillsSection">
+            <h2>🎯 Skills Analysis</h2>
+            
+            <div>
+                <h3>Extracted Skills</h3>
+                <p>Click a skill to remove it, or add new skills below:</p>
+                <div id="extractedSkills"></div>
+                
+                <div class="add-skill-container">
+                    <input type="text" id="newSkillInput" placeholder="Add a skill (e.g., Python, Leadership, Data Analysis)...">
+                    <button id="addSkillBtn" class="primary">+ Add Skill</button>
+                </div>
+            </div>
+            
+            <div class="career-mapping" id="careerMapping">
+                <h3>🤖 AI-Enhanced Career Opportunities</h3>
+                <p>Your skills mapped to future-ready roles:</p>
+                <div id="mappingResults"></div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button id="backToRedactionBtn" class="warning">← Back to Redaction</button>
+                <button id="exportAnalysisBtn" class="success">💾 Export Analysis</button>
+                <button id="perplexitySearchBtn" class="primary">👑 AI Job Search</button>
+            </div>
+        </div>
+        
+        <!-- Step 4: Perplexity AI Search - Crown Jewel -->
+        <div class="section perplexity-container" id="perplexitySection">
+            <div class="perplexity-header">
+                <h3>👑 AI-Powered Job Discovery</h3>
+                <p>Live market intelligence powered by Perplexity AI</p>
+            </div>
+            
+            <div class="perplexity-loading" id="perplexityLoading" style="display: none;">
+                <div class="spinner"></div>
+                <p id="statusMessage">🔄 Initializing job search...</p>
+                <p><em id="statusDetail">Preparing to analyze your resume and skills</em></p>
+            </div>
+            
+            <div class="perplexity-content" id="perplexityContent"></div>
+            <div class="search-metrics" id="searchMetrics" style="display: none;"></div>
+            
+            <div style="margin-top: 20px;">
+                <button id="backToSkillsBtn" class="warning">← Back to Skills</button>
+                <button id="exportJobsBtn" class="success" style="display: none;">💾 Export Job Report</button>
+                <button id="retryPerplexityBtn" class="primary" style="display: none;">🔄 Retry Search</button>
+                <button id="debugBtn" class="secondary" style="display: none;">🐛 Debug Info</button>
+            </div>
+        </div>
+
+        <!-- Debug Section -->
+        <div class="section debug-container" id="debugSection" style="display: none;">
+            <h3>🐛 Debug Information</h3>
+            <div class="debug-tabs">
+                <button class="debug-tab active" data-tab="extracted">Extracted Data</button>
+                <button class="debug-tab" data-tab="prompt">Perplexity Prompt</button>
+                <button class="debug-tab" data-tab="response">API Response</button>
+            </div>
+            
+            <div id="debugContent">
+                <div class="debug-panel" id="extractedPanel">
+                    <h4>Skills Extracted:</h4>
+                    <pre id="extractedSkills"></pre>
+                    <h4>Role Detected:</h4>
+                    <pre id="extractedRole"></pre>
+                </div>
+                
+                <div class="debug-panel" id="promptPanel" style="display: none;">
+                    <h4>System Prompt:</h4>
+                    <pre id="systemPrompt"></pre>
+                    <h4>User Query:</h4>
+                    <pre id="userQuery"></pre>
+                </div>
+                
+                <div class="debug-panel" id="responsePanel" style="display: none;">
+                    <h4>Full Perplexity Response:</h4>
+                    <pre id="fullResponse"></pre>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button id="hideDebugBtn" class="secondary">✕ Hide Debug</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <script type="module">
+        import { FileToTextConverter } from '../src/FileToTextConverter.simple.js';
+        import { ManualRedactor } from '../src/ManualRedactor.js';
+        import { TextExporter } from '../src/TextExporter.js';
+        import { SkillAnalysisService } from '../src/SkillAnalysisService.js';
+        import { PerplexityService } from '../src/PerplexityService.js';
+        
+        // Initialize services
+        const converter = new FileToTextConverter();
+        const manualRedactor = new ManualRedactor();
+        const textExporter = new TextExporter();
+        const skillAnalysis = new SkillAnalysisService();
+        const perplexityService = new PerplexityService();
+        
+        // State
+        let tokens = [];
+        let originalText = '';
+        let originalFilename = '';
+        let extractedSkills = [];
+        let analysisResults = null;
+        let perplexityResults = null;
+        let currentStep = 1;
+        
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const redactionSection = document.getElementById('redactionSection');
+        const skillsSection = document.getElementById('skillsSection');
+        const perplexitySection = document.getElementById('perplexitySection');
+        const textDisplay = document.getElementById('textDisplay');
+        const summaryText = document.getElementById('summaryText');
+        const extractedSkillsDiv = document.getElementById('extractedSkills');
+        const mappingResults = document.getElementById('mappingResults');
+        const perplexityContent = document.getElementById('perplexityContent');
+        const perplexityLoading = document.getElementById('perplexityLoading');
+        
+        // Step indicators
+        const steps = {
+            1: document.getElementById('step1'),
+            2: document.getElementById('step2'),
+            3: document.getElementById('step3'),
+            4: document.getElementById('step4')
+        };
+        
+        // File handling
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                await handleFile(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length > 0) {
+                await handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // Button handlers
+        document.getElementById('undoBtn').addEventListener('click', handleUndo);
+        document.getElementById('redoBtn').addEventListener('click', handleRedo);
+        document.getElementById('exportBtn').addEventListener('click', handleExport);
+        document.getElementById('addressToggle').addEventListener('change', handleAddressToggle);
+        document.getElementById('analyzeSkillsBtn').addEventListener('click', showSkillsAnalysis);
+        document.getElementById('addSkillBtn').addEventListener('click', addSkill);
+        document.getElementById('newSkillInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addSkill();
+        });
+        document.getElementById('backToRedactionBtn').addEventListener('click', () => showStep(2));
+        document.getElementById('exportAnalysisBtn').addEventListener('click', exportAnalysis);
+        document.getElementById('perplexitySearchBtn').addEventListener('click', async () => {
+            showStep(4);
+            await performPerplexitySearch();
+        });
+        document.getElementById('backToSkillsBtn').addEventListener('click', () => showStep(3));
+        document.getElementById('retryPerplexityBtn').addEventListener('click', () => performPerplexitySearch());
+        
+        // Debug functionality
+        document.getElementById('debugBtn').addEventListener('click', () => {
+            document.getElementById('debugSection').style.display = 'block';
+            document.getElementById('debugBtn').style.display = 'none';
+        });
+        document.getElementById('hideDebugBtn').addEventListener('click', () => {
+            document.getElementById('debugSection').style.display = 'none';
+            document.getElementById('debugBtn').style.display = 'inline-block';
+        });
+        
+        // Debug tab switching
+        document.querySelectorAll('.debug-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.debug-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.debug-panel').forEach(p => p.style.display = 'none');
+                
+                // Activate clicked tab
+                tab.classList.add('active');
+                const targetPanel = tab.dataset.tab + 'Panel';
+                document.getElementById(targetPanel).style.display = 'block';
+            });
+        });
+        
+        function showStep(step) {
+            // Hide all sections
+            uploadSection.style.display = 'none';
+            redactionSection.style.display = 'none';
+            skillsSection.style.display = 'none';
+            perplexitySection.style.display = 'none';
+            
+            // Update step indicators
+            Object.values(steps).forEach(s => s.classList.remove('active'));
+            if (step > 1) steps[step - 1].classList.add('completed');
+            steps[step].classList.add('active');
+            
+            // Show current section
+            switch(step) {
+                case 1:
+                    uploadSection.style.display = 'block';
+                    break;
+                case 2:
+                    redactionSection.style.display = 'block';
+                    break;
+                case 3:
+                    skillsSection.style.display = 'block';
+                    break;
+                case 4:
+                    perplexitySection.style.display = 'block';
+                    break;
+            }
+            
+            currentStep = step;
+        }
+        
+        async function handleFile(file) {
+            try {
+                summaryText.textContent = 'Processing file...';
+                originalFilename = file.name;
+                originalText = await converter.convertToText(file);
+                
+                displayText(originalText);
+                showStep(2);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                summaryText.textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        function displayText(text) {
+            const addressToggle = document.getElementById('addressToggle');
+            
+            if (addressToggle.checked) {
+                tokens = manualRedactor.tokenizeWithAutoDetection(text);
+            } else {
+                const originalService = manualRedactor.addressService;
+                manualRedactor.addressService = { detectAddresses: () => [] };
+                tokens = manualRedactor.tokenizeWithAutoDetection(text);
+                manualRedactor.addressService = originalService;
+            }
+            
+            tokens.forEach(token => {
+                if (token.isAutoDetected) {
+                    token.isRedacted = true;
+                }
+            });
+            
+            renderTokens();
+            updateSummary();
+            updateButtons();
+        }
+        
+        function renderTokens() {
+            textDisplay.innerHTML = '';
+            
+            tokens.forEach((token, index) => {
+                const span = document.createElement('span');
+                span.className = 'token';
+                span.textContent = token.text;
+                span.dataset.index = index;
+                
+                if (token.isRedacted) {
+                    if (token.isAutoDetected) {
+                        if (token.piiType === 'address') {
+                            span.classList.add('redacted-address');
+                        } else {
+                            span.classList.add('redacted-auto');
+                        }
+                    } else {
+                        span.classList.add('redacted-manual');
+                    }
+                } else {
+                    span.classList.add('normal');
+                }
+                
+                if (token.text === '\n') {
+                    span.innerHTML = '<br>';
+                    span.style.display = 'block';
+                    span.style.height = '0';
+                } else if (token.text.trim() === '') {
+                    span.innerHTML = token.text.replace(/ /g, '&nbsp;');
+                }
+                
+                if (token.text.trim() !== '') {
+                    span.addEventListener('click', () => handleTokenClick(index));
+                }
+                
+                textDisplay.appendChild(span);
+            });
+        }
+        
+        function handleTokenClick(index) {
+            const token = tokens[index];
+            const oldState = token.isRedacted;
+            
+            manualRedactor.recordAction('toggle', index, oldState, !oldState);
+            tokens = manualRedactor.toggleRedaction(tokens, index);
+            
+            renderTokens();
+            updateSummary();
+            updateButtons();
+        }
+        
+        function handleUndo() {
+            const action = manualRedactor.undo();
+            if (action) {
+                tokens[action.tokenIndex].isRedacted = action.oldState;
+                renderTokens();
+                updateSummary();
+                updateButtons();
+            }
+        }
+        
+        function handleRedo() {
+            const action = manualRedactor.redo();
+            if (action) {
+                tokens[action.tokenIndex].isRedacted = action.newState;
+                renderTokens();
+                updateSummary();
+                updateButtons();
+            }
+        }
+        
+        function handleExport() {
+            const redactedText = manualRedactor.generateRedactedText(tokens);
+            textExporter.exportToTxt(redactedText, originalFilename);
+            updateSummary('File exported successfully!');
+        }
+        
+        function handleAddressToggle() {
+            if (originalText) {
+                displayText(originalText);
+            }
+        }
+        
+        function updateButtons() {
+            document.getElementById('undoBtn').disabled = !manualRedactor.canUndo();
+            document.getElementById('redoBtn').disabled = !manualRedactor.canRedo();
+        }
+        
+        function updateSummary(message = null) {
+            if (message) {
+                summaryText.textContent = message;
+                setTimeout(() => updateSummary(), 3000);
+                return;
+            }
+            
+            const redactedCount = tokens.filter(t => t.isRedacted).length;
+            const autoCount = tokens.filter(t => t.isRedacted && t.isAutoDetected && t.piiType === 'traditional_pii').length;
+            const addressCount = tokens.filter(t => t.isRedacted && t.isAutoDetected && t.piiType === 'address').length;
+            const manualCount = tokens.filter(t => t.isRedacted && !t.isAutoDetected).length;
+            
+            summaryText.textContent = `${redactedCount} items redacted (${autoCount} PII, ${addressCount} addresses, ${manualCount} manual)`;
+        }
+        
+        // Skills Analysis Functions
+        async function showSkillsAnalysis() {
+            const cleanText = tokens
+                .filter(t => !t.isRedacted)
+                .map(t => t.text)
+                .join('');
+            
+            extractedSkills = skillAnalysis.extractSkillsFromText(cleanText);
+            
+            showStep(3);
+            renderSkills();
+            await analyzeSkills();
+        }
+        
+        function renderSkills() {
+            extractedSkillsDiv.innerHTML = '';
+            
+            extractedSkills.forEach((skill, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'skill-tag';
+                tag.textContent = skill;
+                tag.title = 'Click to remove';
+                tag.addEventListener('click', () => removeSkill(index));
+                extractedSkillsDiv.appendChild(tag);
+            });
+            
+            if (extractedSkills.length === 0) {
+                extractedSkillsDiv.innerHTML = '<p style="color: #666;">No skills extracted. Add some manually below.</p>';
+            }
+        }
+        
+        async function removeSkill(index) {
+            const tag = extractedSkillsDiv.children[index];
+            tag.classList.add('removing');
+            
+            setTimeout(() => {
+                extractedSkills.splice(index, 1);
+                renderSkills();
+                analyzeSkills();
+            }, 200);
+        }
+        
+        function addSkill() {
+            const skill = document.getElementById('newSkillInput').value.trim();
+            if (skill && !extractedSkills.includes(skill.toLowerCase())) {
+                extractedSkills.push(skill.toLowerCase());
+                document.getElementById('newSkillInput').value = '';
+                renderSkills();
+                analyzeSkills();
+            }
+        }
+        
+        async function analyzeSkills() {
+            analysisResults = await skillAnalysis.analyze(extractedSkills);
+            
+            mappingResults.innerHTML = '';
+            
+            if (analysisResults.mapped.length === 0) {
+                mappingResults.innerHTML = '<p style="color: #666;">Add skills to see AI-enhanced career opportunities.</p>';
+                return;
+            }
+            
+            analysisResults.mapped.forEach(mapping => {
+                const item = document.createElement('div');
+                item.className = 'mapping-item';
+                item.innerHTML = `
+                    <strong>${mapping.skill}</strong> → ${mapping.enhanced}
+                    <span class="mapping-score">${mapping.score}%</span>
+                `;
+                mappingResults.appendChild(item);
+            });
+        }
+        
+        // Perplexity AI Functions - Crown Jewel
+        // REAL-TIME JOB SEARCH with Server-Sent Events
+        async function performPerplexitySearch() {
+            perplexityLoading.style.display = 'block';
+            perplexityContent.innerHTML = '';
+            document.getElementById('searchMetrics').style.display = 'none';
+            document.getElementById('retryPerplexityBtn').style.display = 'none';
+            
+            const statusMessage = document.getElementById('statusMessage');
+            const statusDetail = document.getElementById('statusDetail');
+            
+            // Progress tracking
+            let startTime = Date.now();
+            let updateCount = 0;
+            
+            // Status callback function for real-time updates with time tracking
+            const updateStatus = (message, detail = '') => {
+                updateCount++;
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                statusMessage.textContent = message;
+                statusDetail.textContent = `${detail} (${elapsed}s elapsed, step ${updateCount})`;
+                console.log(`[${elapsed}s] Status: ${message} - ${detail}`);
+            };
+            
+            try {
+                const cleanText = tokens
+                    .filter(t => !t.isRedacted)
+                    .map(t => t.text)
+                    .join('');
+                
+                updateStatus('🔄 Connecting to job search service...', 'Initializing constraint-driven search');
+                
+                // Use fetch for POST with SSE response
+                fetch('http://localhost:3000/api/v1/search-jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        resumeText: cleanText
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Job search service error: ${response.status}`);
+                    }
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    
+                    function readStream() {
+                        return reader.read().then(({ done, value }) => {
+                            if (done) {
+                                return;
+                            }
+                            
+                            const chunk = decoder.decode(value, { stream: true });
+                            const lines = chunk.split('\n');
+                            
+                            for (const line of lines) {
+                                if (line.trim().startsWith('data: ')) {
+                                    try {
+                                        const data = JSON.parse(line.substring(6));
+                                        
+                                        if (data.type === 'status') {
+                                            updateStatus(data.message, 'Processing...');
+                                        } else if (data.type === 'complete') {
+                                            const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                                            updateStatus('✅ Search completed', `Total time: ${totalTime}s`);
+                                            
+                                            perplexityLoading.style.display = 'none';
+                                            displayJobResults(data.result);
+                                            return;
+                                        } else if (data.type === 'error') {
+                                            perplexityLoading.style.display = 'none';
+                                            displayPerplexityError(new Error(data.error));
+                                            return;
+                                        }
+                                    } catch (parseError) {
+                                        console.error('Failed to parse SSE data:', parseError);
+                                    }
+                                }
+                            }
+                            
+                            return readStream();
+                        });
+                    }
+                    
+                    return readStream();
+                }).catch(error => {
+                    console.error('❌ Fetch failed:', error);
+                    // Fallback to sync search
+                    updateStatus('⚠️ Switching to fallback mode...', 'Real-time updates failed');
+                    return performSyncSearch(cleanText, updateStatus, startTime);
+                });
+                
+            } catch (error) {
+                console.error('❌ Job search failed:', error);
+                perplexityLoading.style.display = 'none';
+                displayPerplexityError(error);
+            }
+        }
+        
+        // Fallback sync search function
+        async function performSyncSearch(cleanText, updateStatus, startTime) {
+            try {
+                updateStatus('🔄 Sending synchronous request...', 'Fallback mode active');
+                
+                const response = await fetch('http://localhost:3000/api/v1/search-jobs-sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        resumeText: cleanText
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Job search service error: ${response.status}`);
+                }
+                
+                const jobData = await response.json();
+                console.log('✅ Job search results:', jobData);
+                
+                const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                updateStatus('✅ Search completed', `Total time: ${totalTime}s (sync mode)`);
+                
+                perplexityLoading.style.display = 'none';
+                displayJobResults(jobData);
+                
+            } catch (error) {
+                console.error('❌ Sync search failed:', error);
+                perplexityLoading.style.display = 'none';
+                displayPerplexityError(error);
+            }
+        }
+        
+        function displayJobResults(jobData) {
+            perplexityContent.innerHTML = '';
+            
+            // Handle direct result object
+            const jobs = jobData.jobs || [];
+            const citations = jobData.citations || [];
+            
+            // Store debug data and show debug button if available
+            const debugData = jobData.debug || jobData.debugInfo;
+            if (debugData) {
+                console.log('🐛 Debug Data Available:', debugData);
+                console.log('📤 Perplexity Query:', debugData.userQuery);
+                console.log('📥 Perplexity Response:', debugData.fullResponse);
+                
+                // Populate debug panels
+                document.getElementById('extractedSkills').textContent = JSON.stringify(debugData.extractedSkills, null, 2);
+                document.getElementById('extractedRole').textContent = debugData.extractedRole || 'No role detected';
+                document.getElementById('systemPrompt').textContent = debugData.systemPrompt || 'No system prompt available';
+                document.getElementById('userQuery').textContent = debugData.userQuery || 'No user query available';
+                document.getElementById('fullResponse').textContent = JSON.stringify(debugData.fullResponse, null, 2);
+                
+                // Show debug button
+                document.getElementById('debugBtn').style.display = 'inline-block';
+            } else {
+                console.log('⚠️ No debug data received in job results:', jobData);
+            }
+            
+            if (!jobs || jobs.length === 0) {
+                const noResultsDiv = document.createElement('div');
+                noResultsDiv.className = 'perplexity-fallback';
+                noResultsDiv.innerHTML = `
+                    <h4>⚠️ No Jobs Found</h4>
+                    <p>No AI-enhanced job opportunities found matching your skills.</p>
+                    <p>This could be due to:</p>
+                    <ul>
+                        <li>Rate limiting on the Perplexity API</li>
+                        <li>Limited job postings in the last 30 days</li>
+                        <li>Very specific skill requirements</li>
+                    </ul>
+                    <p><em>Try again later or adjust your skills.</em></p>
+                `;
+                perplexityContent.appendChild(noResultsDiv);
+                document.getElementById('retryPerplexityBtn').style.display = 'inline-block';
+                return;
+            }
+            
+            // Show job results
+            const resultsDiv = document.createElement('div');
+            resultsDiv.className = 'perplexity-response';
+            resultsDiv.innerHTML = `
+                <h4>🎯 Job Opportunities</h4>
+                <p>Found ${jobs.length} positions that match your skills and experience.</p>
+                <div style="margin-top: 20px;">
+                    ${jobs.map(job => `
+                        <div class="job-card">
+                            <h5 class="job-title">
+                                ${job.link ? `<a href="${job.link}" target="_blank" style="color: #667eea; text-decoration: none;">${job.title}</a>` : job.title}
+                            </h5>
+                            <p class="job-company">${job.company || 'Company not specified'}</p>
+                            <div class="job-skills">
+                                ${job.matchingSkills ? job.matchingSkills.slice(0, 5).map(skill => `<span class="skill-tag">${skill}</span>`).join('') : ''}
+                                ${job.aiSkillsTools ? job.aiSkillsTools.slice(0, 3).map(tool => `<span class="ai-tools">🤖 ${tool}</span>`).join('') : ''}
+                            </div>
+                            ${job.salary ? `<p style="color: #28a745; font-weight: 500; margin: 10px 0 0 0;">💰 ${job.salary}</p>` : ''}
+                            ${job.location ? `<p style="color: #666; font-size: 14px; margin: 5px 0 0 0;">📍 ${job.location}</p>` : ''}
+                            ${job.skillMatchScore ? `<p style="color: #007bff; font-size: 12px; margin: 5px 0 0 0;">Match Score: ${job.skillMatchScore}</p>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            perplexityContent.appendChild(resultsDiv);
+            
+            // Show citations if available
+            if (jobData.citations && jobData.citations.length > 0) {
+                const citationsDiv = document.createElement('div');
+                citationsDiv.className = 'perplexity-citations';
+                citationsDiv.innerHTML = `
+                    <h5>📚 Sources & Citations</h5>
+                    ${jobData.citations.map(citation => `
+                        <div class="citation">
+                            <a href="${citation.url}" target="_blank">${citation.title || citation.url}</a>
+                        </div>
+                    `).join('')}
+                `;
+                perplexityContent.appendChild(citationsDiv);
+            }
+            
+            document.getElementById('exportJobsBtn').style.display = 'inline-block';
+        }
+        
+        function displayPerplexityError(error, debugData = null) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'perplexity-fallback';
+            errorDiv.innerHTML = `
+                <h4>❌ Search Failed</h4>
+                <p>Error: ${error.message}</p>
+                <p>Please try again or check your internet connection.</p>
+            `;
+            perplexityContent.appendChild(errorDiv);
+            document.getElementById('retryPerplexityBtn').style.display = 'inline-block';
+            
+            // Show debug data if available even on error
+            if (debugData) {
+                document.getElementById('extractedSkills').textContent = JSON.stringify(debugData.extractedSkills, null, 2);
+                document.getElementById('extractedRole').textContent = debugData.extractedRole || 'No role detected';
+                document.getElementById('systemPrompt').textContent = debugData.systemPrompt || 'No system prompt available';
+                document.getElementById('userQuery').textContent = debugData.userQuery || 'No user query available';
+                document.getElementById('fullResponse').textContent = JSON.stringify(debugData.fullResponse, null, 2);
+                document.getElementById('debugBtn').style.display = 'inline-block';
+            }
+        }
+        
+        function exportAnalysis() {
+            const report = {
+                filename: originalFilename,
+                date: new Date().toISOString(),
+                extractedSkills: extractedSkills,
+                careerMappings: analysisResults?.mapped || [],
+                sources: analysisResults?.sources || []
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFilename.replace(/\.[^/.]+$/, '') + '_career_analysis.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        document.getElementById('exportJobsBtn').addEventListener('click', () => {
+            if (perplexityResults) {
+                const report = {
+                    filename: originalFilename,
+                    date: new Date().toISOString(),
+                    perplexityResults: perplexityResults,
+                    skills: extractedSkills,
+                    primaryRole: perplexityResults.primaryRole,
+                    industries: perplexityResults.industries
+                };
+                
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = originalFilename.replace(/\.[^/.]+$/, '') + '_ai_job_search.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        });
+        
+        
+        console.log('🚀 AI Career Analyzer ready with Perplexity integration');
+    </script>
+</body>
+</html>

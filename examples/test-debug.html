@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+    <style>
+        body { margin: 20px; font-family: Arial; }
+        #debug { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Career Wizard Debug Test</h1>
+    <div id="debug"></div>
+    <div id="wizardContainer" style="min-height: 200px; border: 1px solid #ccc; padding: 10px;">
+        Loading wizard...
+    </div>
+
+    <script type="module">
+        const debug = document.getElementById('debug');
+        
+        function log(msg, type = 'info') {
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = `[${type}] ${msg}`;
+            debug.appendChild(p);
+            console.log(msg);
+        }
+
+        try {
+            log('Starting module imports...');
+            
+            // Import the compiled FileToTextConverter
+            const { FileToTextConverter } = await import('../dist/FileToTextConverter.js');
+            log('FileToTextConverter imported successfully', 'success');
+            
+            // Import CareerWizard
+            const { CareerWizard } = await import('../src/CareerWizard.js');
+            log('CareerWizard imported successfully', 'success');
+            
+            // Try to create wizard
+            const container = document.getElementById('wizardContainer');
+            log('Container found: ' + (container ? 'YES' : 'NO'));
+            
+            const wizard = new CareerWizard(container, {
+                debug: true,
+                onComplete: (data) => {
+                    log('Wizard completed with data: ' + JSON.stringify(data), 'success');
+                }
+            });
+            
+            log('CareerWizard initialized successfully!', 'success');
+            
+        } catch (error) {
+            log('Error: ' + error.message, 'error');
+            log('Stack: ' + error.stack, 'error');
+        }
+    </script>
+</body>
+</html>

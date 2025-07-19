@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><title>Syntax Test</title></head>
+<body>
+    <h1>Syntax Test</h1>
+    <pre id="output"></pre>
+    <script>
+        const output = document.getElementById('output');
+        
+        // Try to load the ESM file and see what happens
+        fetch('/dist/FileToTextConverter.esm.js')
+            .then(response => response.text())
+            .then(text => {
+                // Check for syntax issues
+                output.textContent = 'File loaded. Length: ' + text.length + '\n';
+                
+                // Look for problematic patterns
+                const lines = text.split('\n');
+                lines.forEach((line, i) => {
+                    if (line.includes('ToTextConverter') && !line.includes('FileToTextConverter')) {
+                        output.textContent += `Line ${i+1}: ${line}\n`;
+                    }
+                });
+                
+                // Try to evaluate as module
+                try {
+                    const blob = new Blob([text], { type: 'text/javascript' });
+                    const url = URL.createObjectURL(blob);
+                    import(url).then(module => {
+                        output.textContent += '\nModule loaded successfully!';
+                        output.textContent += '\nExports: ' + Object.keys(module).join(', ');
+                    }).catch(err => {
+                        output.textContent += '\nModule error: ' + err.message;
+                    });
+                } catch (err) {
+                    output.textContent += '\nEval error: ' + err.message;
+                }
+            })
+            .catch(err => {
+                output.textContent = 'Fetch error: ' + err.message;
+            });
+    </script>
+</body>
+</html>
