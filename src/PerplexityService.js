@@ -5,7 +5,7 @@
 export class PerplexityService {
   constructor() {
     this.apiUrl = 'https://api.perplexity.ai/chat/completions';
-    this.apiKey = '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';
+    this.apiKey = process.env.PERPLEXITY_API_KEY || '';
     this.rateLimit = 20;
     this.timeout = 15000;
     
