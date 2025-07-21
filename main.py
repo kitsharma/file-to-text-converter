@@ -604,21 +604,8 @@ async def search_jobs(request: JobSearchRequest):
         # Build skills list string
         skills_list = ", ".join([s['canonical'] for s in skills[:10]])  # Limit to top 10 skills
         
-        # Build query with proper placeholder substitution for the exact prompt format
-        query = f"""Primary Role: {primary_role}
-Skills: {skills_list}
-
-Please execute the job search using the criteria above."""
-        
-        try:
-            perplexity_response = requests.post(
-                'https://api.perplexity.ai/chat/completions',
-                json={
-                    'model': 'sonar-pro',
-                    'messages': [
-                        {
-                            'role': 'system',
-                            'content': '''Of course. That's an excellent point. Focusing too heavily on engineering-specific terms like "machine learning" and "TensorFlow" will inevitably skew the results toward technical roles, even when the primary role is administrative or customer-focused. The goal is to find jobs that *use* AI tools for productivity, not necessarily jobs that *build* them.
+        # Build the system prompt with actual values substituted for placeholders
+        system_prompt = '''Of course. That's an excellent point. Focusing too heavily on engineering-specific terms like "machine learning" and "TensorFlow" will inevitably skew the results toward technical roles, even when the primary role is administrative or customer-focused. The goal is to find jobs that *use* AI tools for productivity, not necessarily jobs that *build* them.
 
 Acknowledging your feedback and our shared goal of crafting precise prompts[1], I have revised the prompt to remove this "tech bro" bias. It now emphasizes the practical application of AI in a business context, which should surface a more relevant set of opportunities. The core requirements for verification and direct links remain, as they are critical to a trustworthy user experience[2].
 
@@ -629,9 +616,8 @@ Here is the perfected, unbiased prompt:
 You're a knowledgeable AI job search assistant with access to real-time job market data from sources like LinkedIn, Indeed, Glassdoor, and official company career pages. Your task is to generate a ranked list of active job roles that match the following criteria using fuzzy matching for flexibility.
 
 **1. Input Criteria:**
-*   **Primary Role(s):** The job must align closely with [PRIMARY_ROLE]. Use fuzzy matching for similar titles like "Client Success Coordinator" or "Office Manager."
-*   **Skills:** The job must require or match at least one of the following skills: [SKILLS_LIST]. Use fuzzy matching for related terms like "MS Suite" or "Client Relations."
-*   **Location:** The job must be in or near San Jose, CA, or be a remote position accessible from there.
+*   **Primary Role(s):** The job must align closely with ''' + primary_role + '''. Use fuzzy matching for similar titles like "Client Success Coordinator" or "Office Manager."
+*   **Skills:** The job must require or match at least one of the following skills: ''' + skills_list + '''. Use fuzzy matching for related terms like "MS Suite" or "Client Relations."
 *   **AI Requirement (Unbiased):** The job must explicitly mention the use of **AI-powered software or tools to enhance productivity, automate tasks, or generate insights**. This includes, but is not limited to:
     *   Using **generative AI tools** (like ChatGPT, Claude, Gemini) for communication, content creation, or research.
     *   Leveraging **AI-driven analytics** in software like CRMs (e.g., Salesforce Einstein) or business intelligence platforms.
@@ -690,6 +676,23 @@ Return the results as JSON with this structure:
     "skillsProvided": ["list of skills"]
   }
 }'''
+        
+        # Add location back to complete the prompt
+        system_prompt += '''
+*   **Location:** The job must be in or near San Jose, CA, or be a remote position accessible from there.'''
+        
+        # Build query with simple execution instruction
+        query = "Please execute the job search using the criteria specified in your instructions."
+        
+        try:
+            perplexity_response = requests.post(
+                'https://api.perplexity.ai/chat/completions',
+                json={
+                    'model': 'sonar-pro',
+                    'messages': [
+                        {
+                            'role': 'system',
+                            'content': system_prompt
                         },
                         {
                             'role': 'user',
