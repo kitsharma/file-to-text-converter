@@ -1,0 +1,120 @@
+{
+  "default": {
+    "insights": [
+      "AI is transforming all fields—upskill now!",
+      "Remote work capabilities are increasingly essential across industries",
+      "Data literacy is becoming a core requirement for most professional roles"
+    ],
+    "lastUpdated": "2025-01-21"
+  },
+  "Software Engineer": {
+    "insights": [
+      "AI hybrid skills are critical for 2025: combine traditional coding with AI tool expertise",
+      "Full-stack developers with AI/ML integration skills command 40% salary premiums",
+      "GitHub Copilot, Claude Dev, and ChatGPT are now standard productivity tools",
+      "Cloud-native development with AI deployment pipelines is the new standard",
+      "Prompt engineering for code generation is becoming as valuable as traditional debugging"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["blog.getaura.ai", "linkedin.com"]
+  },
+  "Marketing": {
+    "insights": [
+      "Generative AI in marketing: 73% of marketers now use AI for content creation",
+      "AI-powered personalization increases conversion rates by 35% in 2025",
+      "Marketing automation combined with AI analysis drives ROI improvements",
+      "Content creators need AI video/image generation skills for competitive edge",
+      "Customer journey optimization through AI predictive analytics is standard practice"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["thecmo.com", "classcentral.com"]
+  },
+  "Data Scientist": {
+    "insights": [
+      "MLOps and AI model deployment skills are essential for modern data scientists",
+      "Large Language Model fine-tuning expertise is highly sought after in 2025",
+      "Real-time data processing with AI inference is becoming standard",
+      "Responsible AI and bias detection skills are mandatory for senior roles",
+      "Business impact measurement of AI initiatives drives career advancement"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["linkedin.com", "blog.getaura.ai"]
+  },
+  "Product Manager": {
+    "insights": [
+      "AI product strategy and roadmapping skills separate top PMs from the pack",
+      "Understanding AI limitations and bias is critical for ethical product development",
+      "Cross-functional AI team leadership requires new communication skills",
+      "User research for AI-powered products needs specialized methodologies",
+      "AI product metrics and KPIs differ significantly from traditional products"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["thecmo.com", "linkedin.com"]
+  },
+  "Administrative Assistant": {
+    "insights": [
+      "AI-powered scheduling and task automation are transforming administrative roles",
+      "Virtual assistants with AI tool proficiency earn 25% higher salaries",
+      "Document processing and data entry are being revolutionized by AI",
+      "Executive support now includes AI research and analysis capabilities",
+      "Hybrid admin-analyst roles combining traditional skills with AI are emerging"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["classcentral.com", "blog.getaura.ai"]
+  },
+  "Human Resources": {
+    "insights": [
+      "AI-driven recruitment and candidate screening is standard practice in 2025",
+      "HR analytics and people data interpretation skills are highly valued",
+      "Bias detection in AI hiring tools is a critical compliance requirement",
+      "Employee experience optimization through AI insights drives engagement",
+      "AI-powered learning and development programs show 50% better outcomes"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["linkedin.com", "thecmo.com"]
+  },
+  "Sales": {
+    "insights": [
+      "AI-powered lead scoring and customer insights drive 40% more conversions",
+      "Conversational AI and chatbot management are core sales skills",
+      "Predictive analytics for sales forecasting is becoming standard",
+      "AI-assisted proposal and contract generation speeds up deal closure",
+      "Customer relationship automation with AI personalization is essential"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["blog.getaura.ai", "classcentral.com"]
+  },
+  "Customer Support": {
+    "insights": [
+      "AI chatbot management and escalation handling are core support skills",
+      "Sentiment analysis and customer emotion recognition through AI tools",
+      "Automated ticket routing and response generation improve efficiency by 60%",
+      "Multilingual support through AI translation is expanding global opportunities",
+      "Proactive support through AI-powered issue prediction reduces complaints"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["linkedin.com", "thecmo.com"]
+  },
+  "Finance": {
+    "insights": [
+      "AI-powered financial analysis and fraud detection are industry standards",
+      "Automated reporting and regulatory compliance through AI saves 50% time",
+      "Algorithmic trading understanding is valuable even for traditional finance roles",
+      "AI-driven risk assessment and portfolio optimization are core competencies",
+      "Financial modeling with AI prediction capabilities is highly sought after"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["blog.getaura.ai", "classcentral.com"]
+  },
+  "Design": {
+    "insights": [
+      "AI-generated design assets and rapid prototyping are standard workflow tools",
+      "UX research with AI-powered user behavior analysis provides deeper insights",
+      "Accessibility testing through AI ensures inclusive design at scale",
+      "Design systems with AI component generation accelerate product development",
+      "Creative directors need AI art direction and brand consistency skills"
+    ],
+    "lastUpdated": "2025-01-21",
+    "sources": ["thecmo.com", "linkedin.com"]
+  }
+}

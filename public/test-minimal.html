@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>File Upload with Text Conversion</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+    <h1>File Upload with Text Conversion</h1>
+    
+    <div id="uploadArea" style="border: 2px dashed #ccc; padding: 50px; cursor: pointer;">
+        Click to upload (PDF, DOCX, or TXT)
+        <input type="file" id="fileInput" accept=".pdf,.txt,.docx" style="display: none;" />
+    </div>
+    
+    <div id="result" style="margin: 20px 0;"></div>
+    
+    <div id="textOutput" style="border: 1px solid #ccc; padding: 20px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; display: none; user-select: text; cursor: text;"></div>
+    
+    <div id="selectionControls" style="margin: 15px 0; display: none;">
+        <p style="color: #666; font-size: 14px;">💡 Tip: Select any text above to add custom redactions</p>
+        <button id="addSelectedBtn" style="background: #ffc107; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; display: none;">
+            Add Selected Text to Redaction List
+        </button>
+        <div id="selectedText" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 4px; display: none;"></div>
+    </div>
+    
+    <div id="piiSection" style="margin: 20px 0; display: none;">
+        <h3>PII Detection & Redaction Controls</h3>
+        <div style="margin: 15px 0;">
+            <button id="redactAllBtn" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Redact All Selected</button>
+            <button id="clearAllBtn" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Clear All</button>
+            <button id="selectAllBtn" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Select All</button>
+        </div>
+        <div id="piiList" style="margin: 20px 0;"></div>
+        <div id="redactedOutput" style="border: 1px solid #dc3545; padding: 20px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; display: none; background-color: #fff5f5;"></div>
+    </div>
+
+    <div id="skillsSection" style="margin: 30px 0; display: none;">
+        <h3>Skills and Role Extraction</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+            <!-- Skills Column -->
+            <div>
+                <h4 style="color: #28a745; margin-bottom: 15px;">Skills</h4>
+                <div id="skillsList" style="margin-bottom: 15px;"></div>
+                <div style="margin: 10px 0;">
+                    <input type="text" id="addSkillInput" placeholder="Add custom skill..." 
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 5px;">
+                    <button id="addSkillBtn" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%;">
+                        + Add Skill
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Roles Column -->
+            <div>
+                <h4 style="color: #007bff; margin-bottom: 15px;">Roles/Positions</h4>
+                <div id="rolesList" style="margin-bottom: 15px;"></div>
+                <div style="margin: 10px 0;">
+                    <input type="text" id="addRoleInput" placeholder="Add custom role..." 
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 5px;">
+                    <button id="addRoleBtn" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%;">
+                        + Add Role
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin: 20px 0; text-align: center;">
+            <button id="enhanceSkillsBtn" style="background: #17a2b8; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                Enhance with O*NET Data
+            </button>
+            <button id="exportSkillsBtn" style="background: #ffc107; color: #000; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                Export Skills and Roles Summary
+            </button>
+            <button id="searchJobsBtn" onclick="searchJobsWithAI()" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                🔍 Search Jobs with AI
+            </button>
+        </div>
+        
+        <div id="enhancementOutput" style="border: 1px solid #17a2b8; padding: 20px; background-color: #f0fffe; border-radius: 5px; margin: 20px 0; display: none;"></div>
+        <div id="jobSearchOutput" style="border: 1px solid #28a745; padding: 20px; background-color: #f0fff4; border-radius: 5px; margin: 20px 0; display: none;"></div>
+        <div id="skillsOutput" style="border: 1px solid #28a745; padding: 20px; background-color: #f8fff9; border-radius: 5px; display: none;"></div>
+    </div>
+    
+    <script>
+        // Configure PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const result = document.getElementById('result');
+        const textOutput = document.getElementById('textOutput');
+        const selectionControls = document.getElementById('selectionControls');
+        const addSelectedBtn = document.getElementById('addSelectedBtn');
+        const selectedTextDiv = document.getElementById('selectedText');
+        const piiSection = document.getElementById('piiSection');
+        const redactAllBtn = document.getElementById('redactAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const piiList = document.getElementById('piiList');
+        const redactedOutput = document.getElementById('redactedOutput');
+        const skillsSection = document.getElementById('skillsSection');
+        const skillsList = document.getElementById('skillsList');
+        const rolesList = document.getElementById('rolesList');
+        const addSkillInput = document.getElementById('addSkillInput');
+        const addRoleInput = document.getElementById('addRoleInput');
+        const addSkillBtn = document.getElementById('addSkillBtn');
+        const addRoleBtn = document.getElementById('addRoleBtn');
+        const enhanceSkillsBtn = document.getElementById('enhanceSkillsBtn');
+        const exportSkillsBtn = document.getElementById('exportSkillsBtn');
+        const searchJobsBtn = document.getElementById('searchJobsBtn');
+        const enhancementOutput = document.getElementById('enhancementOutput');
+        const skillsOutput = document.getElementById('skillsOutput');
+        
+        let originalText = '';
+        let detectedPII = [];
+        let selectedPII = new Set();
+        let customRedactions = [];
+        let extractedSkills = [];
+        let extractedRoles = [];
+        let enhancedSkills = [];
+        let onetMatches = [];
+        let blsData = [];
+        
+        uploadArea.onclick = () => {
+            fileInput.click();
+        };
+        
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                result.innerHTML = `Processing: ${file.name} (${file.size} bytes)...`;
+                
+                try {
+                    let text = '';
+                    const fileName = file.name.toLowerCase();
+                    
+                    if (file.type === 'text/plain' || fileName.endsWith('.txt')) {
+                        text = await readTextFile(file);
+                    } else if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+                        text = await readPDFFile(file);
+                    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileName.endsWith('.docx')) {
+                        text = await readDocxFile(file);
+                    } else {
+                        throw new Error('Unsupported file type');
+                    }
+                    
+                    originalText = text;
+                    result.innerHTML = `✅ Converted successfully! Text length: ${text.length} characters`;
+                    textOutput.style.display = 'block';
+                    textOutput.textContent = text;
+                    
+                    // Show selection controls
+                    selectionControls.style.display = 'block';
+                    setupTextSelection();
+                    
+                    // Show PII detection section
+                    detectPII(text);
+                    piiSection.style.display = 'block';
+                    
+                    // Extract skills and roles
+                    extractSkillsAndRoles(text);
+                    skillsSection.style.display = 'block';
+                    
+                } catch (error) {
+                    result.innerHTML = `❌ Error: ${error.message}`;
+                    textOutput.style.display = 'none';
+                }
+            }
+        };
+        
+        function readTextFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Failed to read text file'));
+                reader.readAsText(file);
+            });
+        }
+        
+        async function readPDFFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n\n';
+            }
+            
+            return fullText.trim();
+        }
+        
+        async function readDocxFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        }
+        
+        // PII Detection Patterns
+        const piiPatterns = {
+            email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+            phone: /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\+\d{1,3}[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{4})/g,
+            ssn: /\b\d{3}-\d{2}-\d{4}\b/g,
+            address: /\d+\s+[A-Za-z0-9\s,]+\b(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl)\b/gi,
+            name: /^[A-Z][a-z]+\s+[A-Z][a-z]+$/gm // Simple first+last name pattern
+        };
+        
+        function detectPII(text) {
+            detectedPII = [];
+            selectedPII.clear();
+            
+            // Find emails
+            const emails = [...text.matchAll(piiPatterns.email)];
+            emails.forEach((match, index) => {
+                detectedPII.push({
+                    id: `email_${index}`,
+                    type: 'Email',
+                    value: match[0],
+                    start: match.index,
+                    end: match.index + match[0].length
+                });
+            });
+            
+            // Find phone numbers
+            const phones = [...text.matchAll(piiPatterns.phone)];
+            phones.forEach((match, index) => {
+                detectedPII.push({
+                    id: `phone_${index}`,
+                    type: 'Phone',
+                    value: match[0],
+                    start: match.index,
+                    end: match.index + match[0].length
+                });
+            });
+            
+            // Find addresses
+            const addresses = [...text.matchAll(piiPatterns.address)];
+            addresses.forEach((match, index) => {
+                detectedPII.push({
+                    id: `address_${index}`,
+                    type: 'Address',
+                    value: match[0],
+                    start: match.index,
+                    end: match.index + match[0].length
+                });
+            });
+            
+            // Display PII detections using the unified function
+            refreshPIIList();
+            
+            // Set up control buttons
+            setupControlButtons();
+        }
+        
+        function togglePII(piiId) {
+            const checkbox = document.getElementById(piiId);
+            if (checkbox.checked) {
+                selectedPII.add(piiId);
+            } else {
+                selectedPII.delete(piiId);
+            }
+            
+            // Update redaction preview in real-time
+            updateRedactionPreview();
+        }
+        
+        function setupControlButtons() {
+            redactAllBtn.onclick = () => {
+                const selectedDetections = detectedPII.filter(item => selectedPII.has(item.id));
+                if (selectedDetections.length > 0) {
+                    showFinalRedaction(selectedDetections);
+                } else {
+                    alert('Please select at least one PII item to redact.');
+                }
+            };
+            
+            clearAllBtn.onclick = () => {
+                selectedPII.clear();
+                detectedPII.forEach(item => {
+                    const checkbox = document.getElementById(item.id);
+                    if (checkbox) checkbox.checked = false;
+                });
+                redactedOutput.style.display = 'none';
+            };
+            
+            selectAllBtn.onclick = () => {
+                detectedPII.forEach(item => {
+                    selectedPII.add(item.id);
+                    const checkbox = document.getElementById(item.id);
+                    if (checkbox) checkbox.checked = true;
+                });
+                updateRedactionPreview();
+            };
+        }
+        
+        function updateRedactionPreview() {
+            if (selectedPII.size === 0) {
+                redactedOutput.style.display = 'none';
+                return;
+            }
+            
+            const selectedDetections = detectedPII.filter(item => selectedPII.has(item.id));
+            let previewText = originalText;
+            
+            // Sort by position (reverse order to maintain indices)
+            selectedDetections.sort((a, b) => b.start - a.start);
+            
+            selectedDetections.forEach(detection => {
+                const replacement = `[REDACTED ${detection.type.toUpperCase()}]`;
+                previewText = previewText.substring(0, detection.start) + 
+                              replacement + 
+                              previewText.substring(detection.end);
+            });
+            
+            redactedOutput.style.display = 'block';
+            redactedOutput.innerHTML = `<h4>Preview (${selectedPII.size} items selected):</h4><pre style="white-space: pre-wrap; font-family: inherit;">${previewText}</pre>`;
+        }
+        
+        function showFinalRedaction(detections) {
+            let redactedText = originalText;
+            
+            // Sort detections by position (reverse order to maintain indices)
+            detections.sort((a, b) => b.start - a.start);
+            
+            detections.forEach(detection => {
+                const replacement = `[REDACTED ${detection.type.toUpperCase()}]`;
+                redactedText = redactedText.substring(0, detection.start) + 
+                              replacement + 
+                              redactedText.substring(detection.end);
+            });
+            
+            redactedOutput.style.display = 'block';
+            redactedOutput.innerHTML = `<h4>✅ Final Redacted Document (${detections.length} items redacted):</h4>
+                                       <pre style="white-space: pre-wrap; font-family: inherit; background: #f8f9fa; padding: 15px; border-radius: 5px;">${redactedText}</pre>
+                                       <button onclick="downloadRedacted('${redactedText.replace(/'/g, "\\'")}', 'redacted-resume.txt')" 
+                                               style="margin-top: 10px; background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                           📥 Download Redacted Resume
+                                       </button>`;
+        }
+        
+        function setupTextSelection() {
+            textOutput.addEventListener('mouseup', handleTextSelection);
+            textOutput.addEventListener('keyup', handleTextSelection);
+            
+            addSelectedBtn.onclick = () => {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                
+                if (selectedText) {
+                    addCustomRedaction(selectedText);
+                    selection.removeAllRanges(); // Clear selection
+                }
+            };
+        }
+        
+        function handleTextSelection() {
+            const selection = window.getSelection();
+            const selectedText = selection.toString().trim();
+            
+            if (selectedText && selectedText.length > 0) {
+                selectedTextDiv.style.display = 'block';
+                selectedTextDiv.innerHTML = `<strong>Selected:</strong> "${selectedText}"`;
+                addSelectedBtn.style.display = 'inline-block';
+            } else {
+                selectedTextDiv.style.display = 'none';
+                addSelectedBtn.style.display = 'none';
+            }
+        }
+        
+        function addCustomRedaction(text) {
+            // Find all occurrences of the selected text in the original
+            const regex = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            const matches = [...originalText.matchAll(regex)];
+            
+            if (matches.length === 0) {
+                alert('Selected text not found in original document.');
+                return;
+            }
+            
+            // Add each occurrence as a custom redaction
+            matches.forEach((match, index) => {
+                const customId = `custom_${customRedactions.length}_${index}`;
+                const redaction = {
+                    id: customId,
+                    type: 'Custom',
+                    value: match[0],
+                    start: match.index,
+                    end: match.index + match[0].length
+                };
+                
+                customRedactions.push(redaction);
+                detectedPII.push(redaction);
+                selectedPII.add(customId); // Auto-select custom redactions
+            });
+            
+            // Refresh the PII list to include new custom redactions
+            refreshPIIList();
+            updateRedactionPreview();
+            
+            // Clear selection UI
+            selectedTextDiv.style.display = 'none';
+            addSelectedBtn.style.display = 'none';
+            
+            // Show success message
+            const message = matches.length === 1 ? 
+                `Added "${text}" to redaction list` : 
+                `Added ${matches.length} occurrences of "${text}" to redaction list`;
+            
+            selectedTextDiv.style.display = 'block';
+            selectedTextDiv.innerHTML = `<span style="color: #28a745;">✅ ${message}</span>`;
+            setTimeout(() => {
+                selectedTextDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        function refreshPIIList() {
+            // Re-render the PII list with all detections including custom ones
+            if (detectedPII.length > 0) {
+                piiList.innerHTML = `<h4>Found ${detectedPII.length} items to redact (select/deselect as needed):</h4>` +
+                    detectedPII.map(item => {
+                        const isChecked = selectedPII.has(item.id) ? 'checked' : '';
+                        const bgColor = item.type === 'Custom' ? '#e7f3ff' : '#fff3cd';
+                        const borderColor = item.type === 'Custom' ? '#007bff' : '#ffc107';
+                        
+                        return `<div style="margin: 10px 0; padding: 15px; background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 5px;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="${item.id}" ${isChecked} onchange="togglePII('${item.id}')" 
+                                       style="margin-right: 10px; transform: scale(1.2);">
+                                <div>
+                                    <strong>${item.type}:</strong> 
+                                    <span style="font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 3px;">${item.value}</span>
+                                    ${item.type === 'Custom' ? '<span style="margin-left: 8px; color: #007bff; font-size: 12px;">👤 User Selected</span>' : ''}
+                                </div>
+                            </label>
+                        </div>`;
+                    }).join('');
+            } else {
+                piiList.innerHTML = '<div style="color: #28a745; padding: 15px; background: #d4edda; border-radius: 5px;">✅ No items to redact</div>';
+            }
+        }
+        
+        // Architect's Progressive Skills Extraction  
+        function extractSkillsAndRoles(text) {
+            console.log('[EXTRACTION] Starting extraction on text length:', text.length);
+            extractedSkills = [];
+            extractedRoles = [];
+            
+            // ARCHITECT DECISION: Start with compound skills, most valuable to employers
+            const compoundSkills = [
+                // Administrative & Management
+                'Project Management', 'Executive Support', 'Administrative Operations', 'Calendar Management',
+                'Meeting Coordination', 'Workflow Optimization', 'Process Improvement', 'Team Leadership',
+                'Financial Management', 'Budget Management', 'Client Communication', 'Stakeholder Management',
+                
+                // Technical & Digital
+                'Digital Marketing', 'Social Media Management', 'Content Creation', 'Data Analysis',
+                'Database Management', 'CRM Management', 'Digital Communication', 'Virtual Meeting Facilitation',
+                'Document Management', 'File Organization', 'Electronic Filing', 'Data Entry',
+                
+                // Software & Tools (compound)
+                'Google Workspace', 'Microsoft Office', 'Microsoft Teams', 'Project Coordination Tools',
+                'Business Communication Software', 'Customer Relationship Management', 'Event Planning',
+                
+                // Soft Skills (context-aware)
+                'Problem Solving', 'Time Management', 'Communication Skills', 'Organizational Skills',
+                'Training and Development', 'Performance Evaluation', 'Policy Development'
+            ];
+            
+            const toolSkills = [
+                'Trello', 'QuickBooks', 'Canva', 'Zoom', 'Slack', 'Asana', 'Excel', 'PowerPoint',
+                'Gmail', 'Google Calendar', 'Google Drive', 'Outlook', 'Teams', 'OneDrive'
+            ];
+            
+            // ARCHITECT DECISION: Precise role extraction - full job titles only
+            const jobTitles = [
+                'Executive Assistant', 'Administrative Assistant', 'Executive Administrative Assistant',
+                'Project Coordinator', 'Operations Coordinator', 'Training Coordinator', 
+                'Administrative Manager', 'Operations Manager', 'Project Manager',
+                'Administrative Specialist', 'Executive Support Specialist', 'Training Specialist',
+                'Administrative Incharge', 'Operations & Training Coordinator'
+            ];
+            
+            console.log('[EXTRACTION] Testing', compoundSkills.length, 'compound skills');
+            
+            // Extract compound skills first (highest priority)
+            compoundSkills.forEach(skill => {
+                const regex = new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                if (regex.test(text)) {
+                    console.log('[EXTRACTION] Found skill:', skill);
+                    if (!extractedSkills.some(s => s.toLowerCase() === skill.toLowerCase())) {
+                        extractedSkills.push(skill);
+                    }
+                }
+            });
+            
+            // Extract tool skills
+            toolSkills.forEach(tool => {
+                const regex = new RegExp(`\\b${tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                if (regex.test(text)) {
+                    console.log('[EXTRACTION] Found tool:', tool);
+                    if (!extractedSkills.some(s => s.toLowerCase() === tool.toLowerCase())) {
+                        extractedSkills.push(tool);
+                    }
+                }
+            });
+            
+            console.log('[EXTRACTION] Testing', jobTitles.length, 'job titles');
+            
+            // Extract job titles (exact matches only)
+            jobTitles.forEach(title => {
+                const regex = new RegExp(`\\b${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                if (regex.test(text)) {
+                    console.log('[EXTRACTION] Found role:', title);
+                    if (!extractedRoles.some(r => r.toLowerCase() === title.toLowerCase())) {
+                        extractedRoles.push(title);
+                    }
+                }
+            });
+            
+            // ARCHITECT DECISION: Context-aware extraction for missed skills
+            extractContextualSkills(text);
+            
+            console.log('[EXTRACTION] Final results - Skills:', extractedSkills.length, 'Roles:', extractedRoles.length);
+            
+            // Setup UI
+            setupSkillsAndRolesUI();
+            renderSkillsAndRoles();
+        }
+        
+        // ARCHITECT DECISION: Smart context extraction
+        function extractContextualSkills(text) {
+            // Look for skills mentioned in context
+            const contextPatterns = [
+                // "using X" or "with X" patterns
+                /(?:using|with|via|through)\s+([A-Z][a-zA-Z\s&-]+?)(?:\s|,|\.|\|)/g,
+                // "X management" or "X coordination" 
+                /\b([A-Z][a-zA-Z]+)\s+(management|coordination|support|operations|planning|development)\b/gi,
+                // Experience with specific tools
+                /(?:experience with|proficient in|expertise in)\s+([A-Z][a-zA-Z\s&-]+?)(?:\s|,|\.|\|)/gi
+            ];
+            
+            contextPatterns.forEach(pattern => {
+                const matches = [...text.matchAll(pattern)];
+                matches.forEach(match => {
+                    let skill = match[1]?.trim();
+                    if (skill && skill.length > 2 && skill.length < 30) {
+                        // Clean up the skill
+                        skill = skill.replace(/[^\w\s&-]/g, '').trim();
+                        
+                        // Only add if it's not already extracted and looks like a skill
+                        if (!extractedSkills.some(s => s.toLowerCase() === skill.toLowerCase()) &&
+                            !skill.match(/^(the|and|or|for|with|in|on|at|by)$/i)) {
+                            extractedSkills.push(skill);
+                        }
+                    }
+                });
+            });
+        }
+        
+        function setupSkillsAndRolesUI() {
+            // Add skill button
+            addSkillBtn.onclick = () => {
+                const skill = addSkillInput.value.trim();
+                if (skill && !extractedSkills.some(s => s.toLowerCase() === skill.toLowerCase())) {
+                    extractedSkills.push(skill);
+                    addSkillInput.value = '';
+                    renderSkillsAndRoles();
+                }
+            };
+            
+            // Enter key for skills
+            addSkillInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addSkillBtn.click();
+                }
+            });
+            
+            // Add role button
+            addRoleBtn.onclick = () => {
+                const role = addRoleInput.value.trim();
+                if (role && !extractedRoles.some(r => r.toLowerCase() === role.toLowerCase())) {
+                    extractedRoles.push(role);
+                    addRoleInput.value = '';
+                    renderSkillsAndRoles();
+                }
+            };
+            
+            // Enter key for roles
+            addRoleInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addRoleBtn.click();
+                }
+            });
+            
+            // Export button
+            exportSkillsBtn.onclick = () => {
+                exportSkillsAndRoles();
+            };
+            
+            // Enhancement button
+            enhanceSkillsBtn.onclick = () => {
+                enhanceWithONETData();
+            };
+            
+            // Job search button - using HTML onclick instead
+            // searchJobsBtn.onclick = () => {
+            //     searchJobsWithAI();
+            // };
+        }
+        
+        function renderSkillsAndRoles() {
+            // Render skills
+            if (extractedSkills.length > 0) {
+                skillsList.innerHTML = extractedSkills.map((skill, index) => 
+                    `<div style="display: inline-block; margin: 4px; padding: 6px 12px; background: #d4edda; border: 1px solid #28a745; border-radius: 15px; font-size: 14px;">
+                        <span>${skill}</span>
+                        <button onclick="removeSkill(${index})" style="background: none; border: none; color: #dc3545; margin-left: 8px; cursor: pointer; font-weight: bold;">X</button>
+                    </div>`
+                ).join('');
+            } else {
+                skillsList.innerHTML = '<div style="color: #666; font-style: italic;">No skills detected. Add some manually!</div>';
+            }
+            
+            // Render roles
+            if (extractedRoles.length > 0) {
+                rolesList.innerHTML = extractedRoles.map((role, index) => 
+                    `<div style="display: inline-block; margin: 4px; padding: 6px 12px; background: #cce7ff; border: 1px solid #007bff; border-radius: 15px; font-size: 14px;">
+                        <span>${role}</span>
+                        <button onclick="removeRole(${index})" style="background: none; border: none; color: #dc3545; margin-left: 8px; cursor: pointer; font-weight: bold;">X</button>
+                    </div>`
+                ).join('');
+            } else {
+                rolesList.innerHTML = '<div style="color: #666; font-style: italic;">No roles detected. Add some manually!</div>';
+            }
+        }
+        
+        function removeSkill(index) {
+            extractedSkills.splice(index, 1);
+            renderSkillsAndRoles();
+        }
+        
+        function removeRole(index) {
+            extractedRoles.splice(index, 1);
+            renderSkillsAndRoles();
+        }
+        
+        function exportSkillsAndRoles() {
+            const summary = {
+                skills: extractedSkills,
+                roles: extractedRoles,
+                extractedOn: new Date().toISOString(),
+                totalSkills: extractedSkills.length,
+                totalRoles: extractedRoles.length
+            };
+            
+            const summaryText = `SKILLS AND ROLES SUMMARY
+Generated: ${new Date().toLocaleString()}
+
+SKILLS (${extractedSkills.length}):
+${extractedSkills.map(skill => `- ${skill}`).join('\n')}
+
+ROLES/POSITIONS (${extractedRoles.length}):
+${extractedRoles.map(role => `- ${role}`).join('\n')}
+
+JSON Export:
+${JSON.stringify(summary, null, 2)}`;
+            
+            // Show in UI
+            skillsOutput.style.display = 'block';
+            skillsOutput.innerHTML = `<h4>Skills and Roles Summary</h4>
+                                     <pre style="white-space: pre-wrap; font-family: inherit; background: #f8f9fa; padding: 15px; border-radius: 5px;">${summaryText}</pre>
+                                     <button onclick="downloadSkillsSummary()" 
+                                             style="margin-top: 10px; background: #ffc107; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                         Download Summary
+                                     </button>`;
+        }
+        
+        function downloadSkillsSummary() {
+            const summary = {
+                skills: extractedSkills,
+                roles: extractedRoles,
+                extractedOn: new Date().toISOString(),
+                totalSkills: extractedSkills.length,
+                totalRoles: extractedRoles.length
+            };
+            
+            const cleanText = `SKILLS AND ROLES SUMMARY
+Generated: ${new Date().toLocaleString()}
+
+SKILLS (${extractedSkills.length}):
+${extractedSkills.map(skill => `- ${skill}`).join('\n')}
+
+ROLES/POSITIONS (${extractedRoles.length}):
+${extractedRoles.map(role => `- ${role}`).join('\n')}
+
+JSON Export:
+${JSON.stringify(summary, null, 2)}`;
+            
+            const blob = new Blob([cleanText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'skills-and-roles-summary.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // O*NET and BLS Skills Enhancement
+        function enhanceWithONETData() {
+            enhanceSkillsBtn.textContent = 'Enhancing...';
+            enhanceSkillsBtn.disabled = true;
+            
+            // Simulate API delay (reduced for better UX)
+            setTimeout(() => {
+                performSkillsEnhancement();
+                enhanceSkillsBtn.textContent = 'Enhance with O*NET Data';
+                enhanceSkillsBtn.disabled = false;
+            }, 300);
+        }
+        
+        function performSkillsEnhancement() {
+            console.log('[ONET] Starting enhancement with skills:', extractedSkills);
+            console.log('[ONET] Starting enhancement with roles:', extractedRoles);
+            
+            enhancedSkills = [];
+            onetMatches = [];
+            blsData = [];
+            
+            // Log all available O*NET skills
+            console.log('[ONET] Available skills in database:', Object.keys(onetSkillsDB));
+            
+            // ARCHITECT DECISION: Focused O*NET mapping for administrative/business skills
+            const onetSkillsDB = {
+                // Administrative Skills (O*NET 43-xxxx series)
+                'Executive Support': {
+                    onetCode: '43-6011.00',
+                    category: 'Administrative Support',
+                    relatedSkills: ['Calendar Management', 'Meeting Coordination', 'Travel Planning', 'Executive Communication'],
+                    importance: 4.6,
+                    level: 4.2,
+                    growthRate: -9.0,
+                    medianSalary: 65230
+                },
+                'Project Management': {
+                    onetCode: '11-9021.00',
+                    category: 'Management',
+                    relatedSkills: ['Project Coordination', 'Resource Planning', 'Timeline Management', 'Stakeholder Communication'],
+                    importance: 4.8,
+                    level: 4.5,
+                    growthRate: 7.0,
+                    medianSalary: 95370
+                },
+                'Administrative Operations': {
+                    onetCode: '43-6014.00',
+                    category: 'Administrative Support',
+                    relatedSkills: ['File Management', 'Data Entry', 'Office Coordination', 'Policy Implementation'],
+                    importance: 4.3,
+                    level: 3.8,
+                    growthRate: -7.0,
+                    medianSalary: 42050
+                },
+                'Digital Marketing': {
+                    onetCode: '11-2031.00',
+                    category: 'Marketing',
+                    relatedSkills: ['Social Media Management', 'Content Creation', 'Campaign Management', 'Analytics'],
+                    importance: 4.4,
+                    level: 4.0,
+                    growthRate: 10.0,
+                    medianSalary: 65810
+                },
+                'Training and Development': {
+                    onetCode: '13-1151.00',
+                    category: 'Human Resources',
+                    relatedSkills: ['Curriculum Development', 'Performance Evaluation', 'Learning Management', 'Instructional Design'],
+                    importance: 4.5,
+                    level: 4.2,
+                    growthRate: 11.0,
+                    medianSalary: 62700
+                },
+                'Financial Management': {
+                    onetCode: '11-3031.00',
+                    category: 'Finance',
+                    relatedSkills: ['Budget Planning', 'Financial Reporting', 'Cost Analysis', 'Financial Software'],
+                    importance: 4.7,
+                    level: 4.4,
+                    growthRate: 6.0,
+                    medianSalary: 129890
+                },
+                'Google Workspace': {
+                    onetCode: '43-9061.00',
+                    category: 'Business Software',
+                    relatedSkills: ['Gmail', 'Google Calendar', 'Google Drive', 'Google Docs'],
+                    importance: 4.2,
+                    level: 3.5,
+                    growthRate: 2.0,
+                    medianSalary: 45500
+                },
+                'Communication Skills': {
+                    onetCode: '27-3031.00',
+                    category: 'Communication',
+                    relatedSkills: ['Written Communication', 'Verbal Communication', 'Presentation Skills', 'Client Relations'],
+                    importance: 4.8,
+                    level: 4.0,
+                    growthRate: 4.0,
+                    medianSalary: 55000
+                },
+                'Event Planning': {
+                    onetCode: '13-1121.00',
+                    category: 'Event Management',
+                    relatedSkills: ['Venue Coordination', 'Vendor Management', 'Budget Planning', 'Timeline Management'],
+                    importance: 4.3,
+                    level: 3.9,
+                    growthRate: 8.0,
+                    medianSalary: 51560
+                },
+                // Add common variations
+                'Calendar Management': {
+                    onetCode: '43-6011.00',
+                    category: 'Administrative Support',
+                    relatedSkills: ['Scheduling', 'Meeting Coordination', 'Time Management', 'Appointment Setting'],
+                    importance: 4.4,
+                    level: 3.8,
+                    growthRate: -9.0,
+                    medianSalary: 45880
+                },
+                'Microsoft Office': {
+                    onetCode: '43-9061.00',
+                    category: 'Business Software',
+                    relatedSkills: ['Word', 'Excel', 'PowerPoint', 'Outlook'],
+                    importance: 4.5,
+                    level: 3.7,
+                    growthRate: 2.0,
+                    medianSalary: 45500
+                },
+                'Workflow Optimization': {
+                    onetCode: '13-1111.00',
+                    category: 'Business Operations',
+                    relatedSkills: ['Process Improvement', 'Efficiency Analysis', 'Automation', 'Systems Design'],
+                    importance: 4.6,
+                    level: 4.2,
+                    growthRate: 12.0,
+                    medianSalary: 86110
+                },
+                'Budget Management': {
+                    onetCode: '11-3031.02',
+                    category: 'Finance',
+                    relatedSkills: ['Financial Planning', 'Cost Control', 'Expense Tracking', 'Financial Analysis'],
+                    importance: 4.5,
+                    level: 4.0,
+                    growthRate: 6.0,
+                    medianSalary: 73560
+                }
+            };
+            
+            // ARCHITECT DECISION: Role-to-Skills mapping for business/admin roles
+            const roleSkillsDB = {
+                'Executive Assistant': ['Executive Support', 'Calendar Management', 'Meeting Coordination', 'Communication Skills', 'Microsoft Office'],
+                'Administrative Assistant': ['Administrative Operations', 'Data Entry', 'File Organization', 'Customer Service', 'Office Management'],
+                'Project Coordinator': ['Project Management', 'Timeline Management', 'Stakeholder Communication', 'Resource Planning', 'Project Coordination Tools'],
+                'Operations Manager': ['Process Improvement', 'Team Leadership', 'Budget Management', 'Performance Evaluation', 'Workflow Optimization'],
+                'Training Specialist': ['Training and Development', 'Curriculum Development', 'Performance Evaluation', 'Learning Management', 'Presentation Skills'],
+                'Administrative Manager': ['Team Leadership', 'Policy Development', 'Budget Management', 'Administrative Operations', 'Performance Management']
+            };
+            
+            // Enhance existing skills
+            extractedSkills.forEach(skill => {
+                console.log(`[ONET] Checking skill: "${skill}"`);
+                let onetData = onetSkillsDB[skill];
+                let matchedSkill = skill;
+                
+                // If no exact match, try case-insensitive match
+                if (!onetData) {
+                    const skillLower = skill.toLowerCase();
+                    Object.keys(onetSkillsDB).forEach(dbSkill => {
+                        if (dbSkill.toLowerCase() === skillLower) {
+                            onetData = onetSkillsDB[dbSkill];
+                            matchedSkill = dbSkill;
+                        }
+                    });
+                }
+                
+                // If still no match, try partial matching
+                if (!onetData) {
+                    Object.keys(onetSkillsDB).forEach(dbSkill => {
+                        const dbSkillLower = dbSkill.toLowerCase();
+                        const skillLower = skill.toLowerCase();
+                        // Check if one contains the other (but avoid short matches)
+                        if ((skillLower.includes(dbSkillLower) || dbSkillLower.includes(skillLower)) && 
+                            skillLower.length > 5 && dbSkillLower.length > 5) {
+                            onetData = onetSkillsDB[dbSkill];
+                            matchedSkill = dbSkill;
+                            console.log(`[ONET] Fuzzy match: "${skill}" → "${dbSkill}"`);
+                        }
+                    });
+                }
+                
+                if (onetData) {
+                    console.log(`[ONET] MATCH FOUND for "${skill}" (matched as "${matchedSkill}")`);
+                    onetMatches.push({
+                        skill: skill,
+                        matchedAs: matchedSkill,
+                        ...onetData
+                    });
+                    
+                    // Add related skills suggestions
+                    onetData.relatedSkills.forEach(relatedSkill => {
+                        if (!extractedSkills.includes(relatedSkill) && !enhancedSkills.includes(relatedSkill)) {
+                            enhancedSkills.push(relatedSkill);
+                        }
+                    });
+                } else {
+                    console.log(`[ONET] NO MATCH for "${skill}"`);
+                }
+            });
+            
+            // Suggest skills based on roles
+            extractedRoles.forEach(role => {
+                console.log(`[ONET] Checking role: "${role}"`);
+                const suggestedSkills = roleSkillsDB[role];
+                if (suggestedSkills) {
+                    console.log(`[ONET] Found suggestions for role "${role}": ${suggestedSkills.length} skills`);
+                    suggestedSkills.forEach(skill => {
+                        if (!extractedSkills.includes(skill) && !enhancedSkills.includes(skill)) {
+                            enhancedSkills.push(skill);
+                        }
+                    });
+                } else {
+                    console.log(`[ONET] No suggestions found for role "${role}"`);
+                }
+            });
+            
+            console.log('[ONET] Enhancement complete:');
+            console.log('[ONET] - Total matches:', onetMatches.length);
+            console.log('[ONET] - Enhanced skills:', enhancedSkills.length);
+            
+            displayEnhancementResults();
+        }
+        
+        function displayEnhancementResults() {
+            let html = '<h4>O*NET Skills Enhancement Results</h4>';
+            
+            // O*NET Matches
+            if (onetMatches.length > 0) {
+                html += '<div style="margin: 20px 0;"><h5 style="color: #17a2b8;">Your Skills in O*NET Database:</h5>';
+                onetMatches.forEach(match => {
+                    html += `
+                        <div style="background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: #17a2b8;">${match.skill}</strong>
+                                <span style="background: #17a2b8; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px;">
+                                    ${match.category}
+                                </span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 14px;">
+                                <div><strong>Importance:</strong> ${match.importance}/5.0</div>
+                                <div><strong>Level:</strong> ${match.level}/5.0</div>
+                                <div><strong>Growth Rate:</strong> ${match.growthRate}%</div>
+                                <div><strong>Median Salary:</strong> $${match.medianSalary.toLocaleString()}</div>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <strong>Related Skills:</strong> ${match.relatedSkills.join(', ')}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Suggested Skills
+            if (enhancedSkills.length > 0) {
+                html += '<div style="margin: 20px 0;"><h5 style="color: #28a745;">Suggested Skills to Add:</h5>';
+                html += '<div style="margin: 10px 0;">';
+                enhancedSkills.forEach(skill => {
+                    html += `
+                        <button onclick="addSuggestedSkill('${skill}')" 
+                                style="display: inline-block; margin: 4px; padding: 8px 15px; background: #e7f3ff; 
+                                       border: 2px dashed #007bff; border-radius: 15px; cursor: pointer; font-size: 14px;">
+                            + ${skill}
+                        </button>
+                    `;
+                });
+                html += '</div></div>';
+            }
+            
+            // Market Analysis
+            html += `
+                <div style="margin: 20px 0;">
+                    <h5 style="color: #ffc107;">Market Analysis Summary:</h5>
+                    <div style="background: #fff9e6; border: 1px solid #ffc107; padding: 15px; border-radius: 5px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div><strong>Matched Skills:</strong> ${onetMatches.length}</div>
+                            <div><strong>Suggested Skills:</strong> ${enhancedSkills.length}</div>
+                            <div><strong>Avg Growth Rate:</strong> ${onetMatches.length > 0 ? 
+                                (onetMatches.reduce((acc, m) => acc + m.growthRate, 0) / onetMatches.length).toFixed(1) : 0}%</div>
+                            <div><strong>Avg Salary:</strong> $${onetMatches.length > 0 ? 
+                                Math.round(onetMatches.reduce((acc, m) => acc + m.medianSalary, 0) / onetMatches.length).toLocaleString() : 0}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            enhancementOutput.innerHTML = html;
+            enhancementOutput.style.display = 'block';
+        }
+        
+        function addSuggestedSkill(skill) {
+            if (!extractedSkills.includes(skill)) {
+                extractedSkills.push(skill);
+                renderSkillsAndRoles();
+                
+                // Remove from suggestions
+                enhancedSkills = enhancedSkills.filter(s => s !== skill);
+                displayEnhancementResults();
+            }
+        }
+        
+        // Job Search with AI Integration
+        async function searchJobsWithAI() {
+            console.log('[JOB_SEARCH] ========== STARTING JOB SEARCH ==========');
+            console.log('[JOB_SEARCH] Function called at:', new Date().toISOString());
+            
+            const jobSearchOutput = document.getElementById('jobSearchOutput');
+            
+            console.log('[JOB_SEARCH] Current state:', {
+                extractedSkills: extractedSkills,
+                extractedRoles: extractedRoles,
+                originalText: originalText ? originalText.substring(0, 100) + '...' : 'No text',
+                jobSearchOutput: !!jobSearchOutput
+            });
+            
+            // Validation
+            if (extractedSkills.length === 0 && extractedRoles.length === 0) {
+                console.log('[JOB_SEARCH] ❌ No skills or roles found - showing alert');
+                alert('Please extract skills and roles first by uploading a resume or entering text.');
+                return;
+            }
+            
+            console.log('[JOB_SEARCH] ✅ Validation passed, proceeding...');
+            
+            console.log('[JOB_SEARCH] Starting job search with:', {
+                skills: extractedSkills,
+                roles: extractedRoles,
+                originalText: originalText?.substring(0, 200) + '...'
+            });
+            
+            // Update button state
+            searchJobsBtn.textContent = '🔄 Searching Jobs...';
+            searchJobsBtn.disabled = true;
+            
+            try {
+                // Prepare resume text for API
+                const resumeText = originalText || createResumeFromSkillsAndRoles();
+                
+                console.log('[JOB_SEARCH] Resume text to send:', {
+                    length: resumeText.length,
+                    preview: resumeText.substring(0, 200) + '...',
+                    hasOriginalText: !!originalText
+                });
+                
+                const requestBody = {
+                    resumeText: resumeText
+                };
+                
+                console.log('[JOB_SEARCH] 📤 Sending request to:', 'http://localhost:8000/api/jobs/search');
+                console.log('[JOB_SEARCH] Request body:', JSON.stringify(requestBody, null, 2));
+                
+                // Call the job search API (now integrated in FastAPI backend)
+                const response = await fetch('http://localhost:8000/api/jobs/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                console.log('[JOB_SEARCH] 📥 Response status:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('[JOB_SEARCH] ❌ API Error Response:', errorText);
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('[JOB_SEARCH] ✅ API response:', JSON.stringify(result, null, 2));
+                console.log('[JOB_SEARCH] Jobs returned:', result.jobs?.length || 0);
+                console.log('[JOB_SEARCH] Citations:', result.citations?.length || 0);
+                
+                // Display results
+                displayJobSearchResults(result);
+                
+            } catch (error) {
+                console.error('[JOB_SEARCH] Error:', error);
+                jobSearchOutput.innerHTML = `
+                    <h4 style="color: #dc3545;">❌ Job Search Error</h4>
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Possible Solutions:</strong></p>
+                        <ul>
+                            <li>Make sure the job search service is running on port 3000</li>
+                            <li>Check your PERPLEXITY_API_KEY environment variable</li>
+                            <li>Verify network connectivity</li>
+                        </ul>
+                        <p><em>Tip: Run <code>npm run start</code> in the src/job-search directory</em></p>
+                    </div>
+                `;
+                jobSearchOutput.style.display = 'block';
+            } finally {
+                // Reset button state
+                searchJobsBtn.textContent = '🔍 Search Jobs with AI';
+                searchJobsBtn.disabled = false;
+            }
+        }
+        
+        function createResumeFromSkillsAndRoles() {
+            // If no original text, create a synthetic resume from extracted data
+            const skills = extractedSkills.join(', ');
+            const roles = extractedRoles.join(', ');
+            
+            return `Professional with experience in roles including: ${roles}. 
+                   Key skills include: ${skills}. 
+                   Seeking opportunities that leverage AI tools and automation technologies.`;
+        }
+        
+        function displayJobSearchResults(result) {
+            const jobSearchOutput = document.getElementById('jobSearchOutput');
+            
+            let html = '<h4 style="color: #28a745;">🔍 AI Job Search Results</h4>';
+            
+            if (!result.jobs || result.jobs.length === 0) {
+                html += `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>No jobs found</strong> with your current skills and role combination.</p>
+                        <p><strong>Tips:</strong></p>
+                        <ul>
+                            <li>Try adding more general skills (e.g., "Communication", "Project Management")</li>
+                            <li>Consider broader role titles</li>
+                            <li>Check if the Perplexity API is working correctly</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div style="margin: 15px 0; padding: 10px; background: #d4edda; border-radius: 5px;">
+                        <strong>Found ${result.jobs.length} jobs</strong> matching your skills and AI tool requirements
+                    </div>
+                `;
+                
+                result.jobs.forEach((job, index) => {
+                    html += `
+                        <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <h5 style="margin: 0; color: #28a745;">${job.title}</h5>
+                                <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                    ${job.classification || 'N/A'}
+                                </span>
+                            </div>
+                            
+                            ${job.matchReasons && job.matchReasons.length > 0 ? `
+                                <div style="margin: 10px 0; padding: 8px; background: #e8f5e8; border-radius: 5px;">
+                                    <strong>✅ Why this job matches:</strong>
+                                    <div style="margin: 5px 0;">
+                                        ${job.matchReasons.map(reason => 
+                                            `<span style="background: #28a745; color: white; padding: 2px 6px; margin: 2px; border-radius: 10px; font-size: 11px; display: inline-block;">${reason}</span>`
+                                        ).join(' ')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="margin: 10px 0;">
+                                <strong>🏢 Company:</strong> ${job.company}<br>
+                                <strong>📍 Location:</strong> ${job.location || 'Not specified'}
+                                ${job.salaryRange ? `<br><strong>💰 Salary Range:</strong> ${job.salaryRange}` : ''}
+                            </div>
+                            
+                            <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                <strong>📋 Description:</strong><br>
+                                ${job.description ? job.description.substring(0, 300) + '...' : 'No description available'}
+                            </div>
+                            
+                            ${job.matchingSkills && job.matchingSkills.length > 0 ? `
+                                <div style="margin: 10px 0;">
+                                    <strong>✅ Matching Skills (${job.matchingSkills.length}):</strong><br>
+                                    <div style="margin: 5px 0;">
+                                        ${job.matchingSkills.map(skill => 
+                                            `<span style="background: #e7f3ff; padding: 3px 8px; margin: 2px; border-radius: 12px; font-size: 12px; display: inline-block;">${skill}</span>`
+                                        ).join(' ')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${job.aiSkillsTools && job.aiSkillsTools.length > 0 ? `
+                                <div style="margin: 10px 0;">
+                                    <strong>🤖 AI Tools Required:</strong><br>
+                                    <div style="margin: 5px 0;">
+                                        ${job.aiSkillsTools.map(tool => 
+                                            `<span style="background: #fff3cd; padding: 3px 8px; margin: 2px; border-radius: 12px; font-size: 12px; display: inline-block;">${tool}</span>`
+                                        ).join(' ')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="margin-top: 15px; text-align: right;">
+                                ${job.link ? 
+                                    `<a href="${job.link}" target="_blank" style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                        Apply Now →
+                                    </a>` : 
+                                    '<span style="color: #6c757d; font-style: italic;">No application link available</span>'
+                                }
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Add career analysis if available
+                if (result.analysis) {
+                    html += `
+                        <div style="margin: 20px 0; padding: 20px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                            <h5 style="color: #28a745; margin-bottom: 10px;">📈 Career Opportunity Analysis</h5>
+                            <div style="color: #333; line-height: 1.6;">
+                                ${result.analysis}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add citations if available
+                if (result.citations && result.citations.length > 0) {
+                    html += `
+                        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #6c757d;">
+                            <h6 style="color: #6c757d;">📚 Sources:</h6>
+                            <ul style="margin: 5px 0; padding-left: 20px;">
+                                ${result.citations.map(citation => `<li style="margin: 2px 0;"><a href="${citation}" target="_blank">${citation}</a></li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+            
+            jobSearchOutput.innerHTML = html;
+            jobSearchOutput.style.display = 'block';
+            
+            // Scroll to results
+            jobSearchOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function downloadRedacted(text, filename) {
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Test function to manually trigger job search
+        function testJobSearch() {
+            console.log('[TEST] Manual job search test triggered');
+            
+            // Add some mock skills if none exist
+            if (!extractedSkills || extractedSkills.length === 0) {
+                extractedSkills = ['Project Management', 'Microsoft Office'];
+                console.log('[TEST] Added mock skills:', extractedSkills);
+            }
+            
+            if (!extractedRoles || extractedRoles.length === 0) {
+                extractedRoles = ['Project Manager'];
+                console.log('[TEST] Added mock roles:', extractedRoles);
+            }
+            
+            console.log('[TEST] Calling searchJobsWithAI...');
+            searchJobsWithAI();
+        }
+        
+        // Make testJobSearch available globally for console testing
+        window.testJobSearch = testJobSearch;
+    </script>
+</body>
+</html>

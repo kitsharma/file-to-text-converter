@@ -15,6 +15,10 @@ import uvicorn
 import asyncio
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Import our backend services
 from src.models.user_profile import UserProfile
@@ -58,6 +62,9 @@ try:
     # Add data directory for CSV files
     if os.path.exists("assets/data"):
         app.mount("/data", StaticFiles(directory="assets/data"), name="data")
+    # Mount public directory for HTML files (must be last to avoid conflicts)
+    if os.path.exists("public"):
+        app.mount("/public", StaticFiles(directory="public"), name="public")
 except Exception as e:
     logger.warning(f"Some static directories not found: {e}")
 
@@ -95,10 +102,19 @@ class BiasAnalysisRequest(BaseModel):
 async def read_index():
     """Serve the main application page"""
     try:
-        with open("public/index.html", "r") as f:
-            return HTMLResponse(content=f.read(), status_code=200)
+        with open("public/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200, media_type="text/html; charset=utf-8")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Index file not found")
+
+@app.get("/test-minimal.html", response_class=HTMLResponse)
+async def read_test_minimal():
+    """Serve the test minimal page"""
+    try:
+        with open("public/test-minimal.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200, media_type="text/html; charset=utf-8")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Test page not found")
 
 @app.get("/health")
 async def health_check():
@@ -484,6 +500,288 @@ async def load_initial_data():
         
     except Exception as e:
         logger.error(f"Error loading initial data: {str(e)}")
+
+
+# Job Search Integration
+class JobSearchRequest(BaseModel):
+    resumeText: str
+
+@app.post("/api/jobs/search")
+async def search_jobs(request: JobSearchRequest):
+    """
+    Search for AI-enhanced job opportunities based on resume text
+    """
+    try:
+        import os
+        import requests
+        import json
+        import re
+        
+        # Input validation and sanitization
+        resume_text = request.resumeText.strip()
+        if not resume_text:
+            raise HTTPException(status_code=400, detail="Resume text is required")
+        
+        if len(resume_text) > 10000:  # Limit input size
+            resume_text = resume_text[:10000]
+        
+        # Remove potential PII patterns (basic sanitization)
+        # Remove email addresses
+        resume_text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL]', resume_text)
+        # Remove phone numbers
+        resume_text = re.sub(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', '[PHONE]', resume_text)
+        # Remove SSN patterns
+        resume_text = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[SSN]', resume_text)
+        
+        logger.info(f"Job search request received, text length: {len(resume_text)}")
+        
+        # Extract basic skills (simplified version)
+        skills = []
+        skill_patterns = [
+            'Project Management', 'Microsoft Office', 'Administrative', 'Executive Support',
+            'Calendar Management', 'Communication', 'Leadership', 'Training', 'Marketing',
+            'Python', 'JavaScript', 'React', 'Node.js', 'AI', 'Machine Learning'
+        ]
+        
+        for skill in skill_patterns:
+            if skill.lower() in resume_text.lower():
+                skills.append({'canonical': skill, 'id': None})
+        
+        if not skills:
+            skills = [{'canonical': 'General Professional', 'id': None}]
+        
+        logger.info(f"Extracted skills: {[s['canonical'] for s in skills]}")
+        
+        # Enhanced role extraction from resume text
+        role_patterns = [
+            r'(?i)(?:administrative\s+assistant|admin\s+assistant|executive\s+assistant)',
+            r'(?i)(?:coordinator|manager|director|supervisor|specialist)',
+            r'(?i)(?:analyst|officer|representative|support)',
+            r'(?i)(?:secretary|clerk|aide)'
+        ]
+        
+        extracted_roles = []
+        for pattern in role_patterns:
+            import re
+            matches = re.findall(pattern, resume_text)
+            extracted_roles.extend(matches)
+        
+        # Determine primary role - prefer extracted roles over skills
+        if extracted_roles:
+            primary_role = extracted_roles[0].title()
+        elif 'Administrative' in [s['canonical'] for s in skills]:
+            primary_role = 'Administrative Assistant'
+        else:
+            primary_role = skills[0]['canonical'] if skills else 'Professional'
+        
+        # Query Perplexity API
+        perplexity_api_key = os.getenv('PERPLEXITY_API_KEY')
+        if not perplexity_api_key or perplexity_api_key == 'your_perplexity_api_key_here':
+            logger.warning("PERPLEXITY_API_KEY not configured, returning mock data")
+            # Return mock job data based on extracted skills and roles
+            mock_jobs = [
+                {
+                    "title": f"{primary_role} - AI Enhanced",
+                    "company": "TechStart Inc.",
+                    "location": "San Jose, CA / Remote",
+                    "description": f"Advanced {primary_role.lower()} position leveraging {', '.join([s['canonical'] for s in skills[:3]])} skills with AI automation tools.",
+                    "link": "https://example.com/jobs/1",
+                    "aiSkillsTools": ["ChatGPT", "Microsoft Copilot", "AI scheduling"],
+                    "skills": [s['canonical'] for s in skills[:5]],
+                    "salaryRange": "$55,000 - $75,000",
+                    "matchingSkills": [s['canonical'] for s in skills[:3]],
+                    "matchReasons": ["Role Match", f"{len(skills)} Skill Matches", "AI Tools Required"],
+                    "classification": "ai-enhanced"
+                }
+            ]
+            return {
+                "jobs": mock_jobs,
+                "citations": [],
+                "message": "Demo mode: Configure PERPLEXITY_API_KEY for live job search",
+                "analysis": f"Based on your {primary_role} role and {len(skills)} extracted skills, AI-enhanced positions in this field typically offer good growth potential."
+            }
+        
+        # Build skills list string
+        skills_list = ", ".join([s['canonical'] for s in skills[:10]])  # Limit to top 10 skills
+        
+        # Updated query with role and skills
+        query = f"Primary role: {primary_role}. Skills list: {skills_list}"
+        
+        try:
+            perplexity_response = requests.post(
+                'https://api.perplexity.ai/chat/completions',
+                json={
+                    'model': 'sonar-pro',
+                    'messages': [
+                        {
+                            'role': 'system',
+                            # Old prompt:
+                            # 'content': 'You are a job search assistant. Return job listings in JSON format with: title, company, location, description, link, aiSkillsTools (array of AI tools mentioned), and skills (array of required skills). Include jobs that mention AI, automation, or are relevant to the role even if they don\'t explicitly mention AI tools.'
+                            # New A/B test prompt:
+                            'content': '''You're a knowledgeable AI job search assistant with access to current job market data. Your task is to generate a list of active job roles that match the following criteria:
+
+The job must align with the specified primary role and require or match at least one of the provided skills.
+Additionally, the job must explicitly involve or require AI-related skills or tools, such as AI model training, AI prompt engineering, machine learning, natural language processing, AI ethics, conversational AI design, or tools like ChatGPT, TensorFlow, or similar.
+
+Output the results in a clear Markdown table with columns for: Job Title, Location (prefer near San Jose, CA, or remote if applicable), Key Matching Skills (from the input list), Required AI Skills/Tools, Brief Description, and Estimated Salary Range (based on current market data).
+
+Limit to 5-7 high-quality, active job matches from verifiable sources like LinkedIn, Indeed, or Glassdoor. Ensure all suggestions are realistic and backed by trends in AI-integrated roles. If no exact matches, suggest closely related roles and explain why.
+
+Finally, provide a short analysis of how these roles represent positive career opportunities, focusing on growth potential and alignment with the input skills.
+
+Return the results as JSON with this structure:
+{
+  "jobs": [
+    {
+      "title": "Job Title",
+      "company": "Company Name", 
+      "location": "Location",
+      "description": "Brief description",
+      "link": "URL if available",
+      "aiSkillsTools": ["AI Tool 1", "AI Tool 2"],
+      "skills": ["Matching Skill 1", "Matching Skill 2"],
+      "salaryRange": "$XX,XXX - $XXX,XXX"
+    }
+  ],
+  "analysis": "Career opportunity analysis text"
+}'''
+                        },
+                        {
+                            'role': 'user',
+                            'content': query
+                        }
+                    ],
+                    'temperature': 0.1,
+                    'max_tokens': 2000
+                },
+                headers={
+                    'Authorization': f'Bearer {perplexity_api_key}',
+                    'Content-Type': 'application/json'
+                },
+                timeout=30
+            )
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Perplexity API request failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Job search API connection failed: {str(e)}")
+        
+        if perplexity_response.status_code == 401:
+            logger.error("Perplexity API authentication failed - invalid or expired API key")
+            # Return mock data instead of failing
+            mock_jobs = [
+                {
+                    "title": f"{primary_role} - AI Enhanced",
+                    "company": "TechStart Inc.",
+                    "location": "San Jose, CA / Remote", 
+                    "description": f"Advanced {primary_role.lower()} position leveraging {', '.join([s['canonical'] for s in skills[:3]])} skills with AI automation tools.",
+                    "link": "https://example.com/jobs/1",
+                    "aiSkillsTools": ["ChatGPT", "Microsoft Copilot", "AI scheduling"],
+                    "skills": [s['canonical'] for s in skills[:5]],
+                    "salaryRange": "$55,000 - $75,000",
+                    "matchingSkills": [s['canonical'] for s in skills[:3]],
+                    "matchReasons": ["Role Match", f"{len(skills)} Skill Matches", "AI Tools Required"],
+                    "classification": "ai-enhanced"
+                }
+            ]
+            return {
+                "jobs": mock_jobs,
+                "citations": [],
+                "message": "Demo mode: API key invalid. Please configure a valid PERPLEXITY_API_KEY.",
+                "analysis": f"Based on your {primary_role} role and {len(skills)} extracted skills, AI-enhanced positions in this field typically offer good growth potential."
+            }
+        elif perplexity_response.status_code != 200:
+            logger.error(f"Perplexity API error: {perplexity_response.status_code} - {perplexity_response.text}")
+            raise HTTPException(status_code=500, detail=f"External job search API error: {perplexity_response.status_code}")
+        
+        response_data = perplexity_response.json()
+        content = response_data['choices'][0]['message']['content']
+        
+        # Parse job listings from response
+        job_listings = []
+        analysis_text = ""
+        try:
+            # Try to extract JSON from the response
+            json_match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
+            if json_match:
+                parsed_data = json.loads(json_match.group(1))
+                # Handle new format with jobs and analysis
+                if isinstance(parsed_data, dict) and 'jobs' in parsed_data:
+                    job_listings = parsed_data['jobs']
+                    analysis_text = parsed_data.get('analysis', '')
+                elif isinstance(parsed_data, list):
+                    job_listings = parsed_data
+            else:
+                # Try to find JSON object directly
+                json_match = re.search(r'(\{.*?\})', content, re.DOTALL)
+                if json_match:
+                    parsed_data = json.loads(json_match.group(1))
+                    if 'jobs' in parsed_data:
+                        job_listings = parsed_data['jobs']
+                        analysis_text = parsed_data.get('analysis', '')
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse job listings JSON: {e}")
+            job_listings = []
+        
+        # Apply role-based filtering and add match reasons
+        filtered_jobs = []
+        for job in job_listings:
+            job_title = job.get('title', '').lower()
+            
+            # Role matching (relaxed)
+            role_match = (
+                any(skill['canonical'].lower() in job_title for skill in skills) or
+                'manager' in job_title or 'coordinator' in job_title or 
+                'specialist' in job_title or 'assistant' in job_title
+            )
+            
+            # Skill matching
+            matching_skills = []
+            for skill in skills:
+                skill_name = skill['canonical'].lower()
+                job_desc = job.get('description', '').lower()
+                if skill_name in job_desc or skill_name in job_title:
+                    matching_skills.append(skill['canonical'])
+            
+            # AI tools check
+            ai_tools = job.get('aiSkillsTools', [])
+            if not ai_tools:
+                ai_patterns = ['ai', 'automation', 'chatgpt', 'claude', 'machine learning', 'rpa']
+                ai_tools = [pattern for pattern in ai_patterns if pattern in job.get('description', '').lower()]
+            
+            # Determine match reasons
+            match_reasons = []
+            if role_match:
+                match_reasons.append('Role Match')
+            if matching_skills:
+                match_reasons.append(f'{len(matching_skills)} Skill Match{"es" if len(matching_skills) > 1 else ""}')
+            if ai_tools:
+                match_reasons.append('AI Tools Required')
+            
+            # Include job if it has role match AND (skills OR AI tools)
+            if role_match and (matching_skills or ai_tools):
+                filtered_jobs.append({
+                    **job,
+                    'matchingSkills': matching_skills,
+                    'aiSkillsTools': ai_tools,
+                    'matchReasons': match_reasons,
+                    'classification': 'ai-enhanced'
+                })
+        
+        logger.info(f"Returning {len(filtered_jobs)} filtered jobs from {len(job_listings)} total")
+        
+        return {
+            "jobs": filtered_jobs[:20],  # Limit to 20 jobs
+            "citations": response_data.get('citations', []),
+            "totalFound": len(job_listings),
+            "filtered": len(filtered_jobs),
+            "analysis": analysis_text  # Include career opportunity analysis
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Job search error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Job search failed: {str(e)}")
+
 
 @app.on_event("startup")
 async def startup_event():
