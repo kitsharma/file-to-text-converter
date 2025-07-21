@@ -17,8 +17,8 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Load environment variables from parent projects directory
-load_dotenv(os.path.join(os.path.dirname(__file__), '../../.env'))
+# Load environment variables
+load_dotenv()
 
 # Import our backend services
 from src.models.user_profile import UserProfile
@@ -576,6 +576,7 @@ async def search_jobs(request: JobSearchRequest):
         
         # Query Perplexity API
         perplexity_api_key = os.getenv('PERPLEXITY_API_KEY')
+        logger.info(f"API key loaded: {perplexity_api_key[:15] if perplexity_api_key else 'None'}...")
         if not perplexity_api_key or perplexity_api_key == 'your_perplexity_api_key_here':
             logger.error("PERPLEXITY_API_KEY not configured")
             raise HTTPException(

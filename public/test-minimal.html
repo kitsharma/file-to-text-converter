@@ -1332,6 +1332,34 @@ ${result.rawResponse || 'Raw response not available'}
             jobSearchContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
+        function switchJobTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.style.background = '#28a745';
+                btn.style.color = 'white';
+            });
+            
+            // Show selected tab content
+            if (tabName === 'results') {
+                document.getElementById('jobSearchResults').style.display = 'block';
+                document.querySelector('button[onclick="switchJobTab(\'results\')"]').style.background = '#ffffff';
+                document.querySelector('button[onclick="switchJobTab(\'results\')"]').style.color = '#28a745';
+            } else if (tabName === 'raw') {
+                document.getElementById('rawResponseContent').style.display = 'block';
+                document.querySelector('button[onclick="switchJobTab(\'raw\')"]').style.background = '#ffffff';
+                document.querySelector('button[onclick="switchJobTab(\'raw\')"]').style.color = '#28a745';
+            } else if (tabName === 'critique') {
+                document.getElementById('critiqueContent').style.display = 'block';
+                document.querySelector('button[onclick="switchJobTab(\'critique\')"]').style.background = '#ffffff';
+                document.querySelector('button[onclick="switchJobTab(\'critique\')"]').style.color = '#28a745';
+            }
+        }
+
         function generateCritique(result) {
             // Analyze the response and generate critique
             const jobs = result.jobs || [];

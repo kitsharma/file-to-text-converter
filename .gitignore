@@ -49,6 +49,8 @@ pids
 *.swp
 *.swo
 
+oh.yml
+
 # OS
 .DS_Store
 .DS_Store?

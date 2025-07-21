@@ -1,0 +1,38 @@
+{
+    "jobs": [
+        {
+            "title": "Python - AI Enhanced",
+            "company": "TechStart Inc.",
+            "location": "San Jose, CA / Remote",
+            "description": "Advanced python position leveraging Python, JavaScript, React skills with AI automation tools.",
+            "link": "https://example.com/jobs/1",
+            "aiSkillsTools": [
+                "ChatGPT",
+                "Microsoft Copilot",
+                "AI scheduling"
+            ],
+            "skills": [
+                "Python",
+                "JavaScript",
+                "React",
+                "AI",
+                "Machine Learning"
+            ],
+            "salaryRange": "$55,000 - $75,000",
+            "matchingSkills": [
+                "Python",
+                "JavaScript",
+                "React"
+            ],
+            "matchReasons": [
+                "Role Match",
+                "5 Skill Matches",
+                "AI Tools Required"
+            ],
+            "classification": "ai-enhanced"
+        }
+    ],
+    "citations": [],
+    "message": "Demo mode: Configure PERPLEXITY_API_KEY for live job search",
+    "analysis": "Based on your Python role and 5 extracted skills, AI-enhanced positions in this field typically offer good growth potential."
+}
