@@ -577,29 +577,11 @@ async def search_jobs(request: JobSearchRequest):
         # Query Perplexity API
         perplexity_api_key = os.getenv('PERPLEXITY_API_KEY')
         if not perplexity_api_key or perplexity_api_key == 'your_perplexity_api_key_here':
-            logger.warning("PERPLEXITY_API_KEY not configured, returning mock data")
-            # Return mock job data based on extracted skills and roles
-            mock_jobs = [
-                {
-                    "title": f"{primary_role} - AI Enhanced",
-                    "company": "TechStart Inc.",
-                    "location": "San Jose, CA / Remote",
-                    "description": f"Advanced {primary_role.lower()} position leveraging {', '.join([s['canonical'] for s in skills[:3]])} skills with AI automation tools.",
-                    "link": "https://example.com/jobs/1",
-                    "aiSkillsTools": ["ChatGPT", "Microsoft Copilot", "AI scheduling"],
-                    "skills": [s['canonical'] for s in skills[:5]],
-                    "salaryRange": "$55,000 - $75,000",
-                    "matchingSkills": [s['canonical'] for s in skills[:3]],
-                    "matchReasons": ["Role Match", f"{len(skills)} Skill Matches", "AI Tools Required"],
-                    "classification": "ai-enhanced"
-                }
-            ]
-            return {
-                "jobs": mock_jobs,
-                "citations": [],
-                "message": "Demo mode: Configure PERPLEXITY_API_KEY for live job search",
-                "analysis": f"Based on your {primary_role} role and {len(skills)} extracted skills, AI-enhanced positions in this field typically offer good growth potential."
-            }
+            logger.error("PERPLEXITY_API_KEY not configured")
+            raise HTTPException(
+                status_code=503, 
+                detail="Job search service unavailable. Please configure PERPLEXITY_API_KEY in .env file."
+            )
         
         # Build skills list string
         skills_list = ", ".join([s['canonical'] for s in skills[:10]])  # Limit to top 10 skills
@@ -714,28 +696,10 @@ Return the results as JSON with this structure:
         
         if perplexity_response.status_code == 401:
             logger.error("Perplexity API authentication failed - invalid or expired API key")
-            # Return mock data instead of failing
-            mock_jobs = [
-                {
-                    "title": f"{primary_role} - AI Enhanced",
-                    "company": "TechStart Inc.",
-                    "location": "San Jose, CA / Remote", 
-                    "description": f"Advanced {primary_role.lower()} position leveraging {', '.join([s['canonical'] for s in skills[:3]])} skills with AI automation tools.",
-                    "link": "https://example.com/jobs/1",
-                    "aiSkillsTools": ["ChatGPT", "Microsoft Copilot", "AI scheduling"],
-                    "skills": [s['canonical'] for s in skills[:5]],
-                    "salaryRange": "$55,000 - $75,000",
-                    "matchingSkills": [s['canonical'] for s in skills[:3]],
-                    "matchReasons": ["Role Match", f"{len(skills)} Skill Matches", "AI Tools Required"],
-                    "classification": "ai-enhanced"
-                }
-            ]
-            return {
-                "jobs": mock_jobs,
-                "citations": [],
-                "message": "Demo mode: API key invalid. Please configure a valid PERPLEXITY_API_KEY.",
-                "analysis": f"Based on your {primary_role} role and {len(skills)} extracted skills, AI-enhanced positions in this field typically offer good growth potential."
-            }
+            raise HTTPException(
+                status_code=401,
+                detail="Perplexity API authentication failed. Please check your PERPLEXITY_API_KEY."
+            )
         elif perplexity_response.status_code != 200:
             logger.error(f"Perplexity API error: {perplexity_response.status_code} - {perplexity_response.text}")
             raise HTTPException(status_code=500, detail=f"External job search API error: {perplexity_response.status_code}")
