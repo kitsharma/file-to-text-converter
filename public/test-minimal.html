@@ -81,7 +81,28 @@
         </div>
         
         <div id="enhancementOutput" style="border: 1px solid #17a2b8; padding: 20px; background-color: #f0fffe; border-radius: 5px; margin: 20px 0; display: none;"></div>
-        <div id="jobSearchOutput" style="border: 1px solid #28a745; padding: 20px; background-color: #f0fff4; border-radius: 5px; margin: 20px 0; display: none;"></div>
+        
+        <!-- Job Search Results with Tabs -->
+        <div id="jobSearchContainer" style="border: 1px solid #28a745; background-color: #f0fff4; border-radius: 5px; margin: 20px 0; display: none;">
+            <!-- Tab Navigation -->
+            <div id="jobSearchTabs" style="background: #28a745; padding: 0; border-radius: 5px 5px 0 0;">
+                <button class="tab-button active" onclick="switchJobTab('results')" style="background: #ffffff; color: #28a745; border: none; padding: 12px 24px; margin: 8px 8px 0 8px; border-radius: 5px 5px 0 0; cursor: pointer; font-weight: bold;">
+                    Job Results
+                </button>
+                <button class="tab-button" onclick="switchJobTab('raw')" style="background: #28a745; color: white; border: none; padding: 12px 24px; margin: 8px 8px 0 0; border-radius: 5px 5px 0 0; cursor: pointer; font-weight: bold;">
+                    Raw Response
+                </button>
+                <button class="tab-button" onclick="switchJobTab('critique')" style="background: #28a745; color: white; border: none; padding: 12px 24px; margin: 8px 8px 0 0; border-radius: 5px 5px 0 0; cursor: pointer; font-weight: bold;">
+                    Critique & Rating
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div id="jobSearchResults" class="tab-content" style="padding: 20px; display: block;"></div>
+            <div id="rawResponseContent" class="tab-content" style="padding: 20px; display: none;"></div>
+            <div id="critiqueContent" class="tab-content" style="padding: 20px; display: none;"></div>
+        </div>
+        
         <div id="skillsOutput" style="border: 1px solid #28a745; padding: 20px; background-color: #f8fff9; border-radius: 5px; display: none;"></div>
     </div>
     
@@ -1099,20 +1120,23 @@ ${JSON.stringify(summary, null, 2)}`;
                 
             } catch (error) {
                 console.error('[JOB_SEARCH] Error:', error);
-                jobSearchOutput.innerHTML = `
+                const jobSearchContainer = document.getElementById('jobSearchContainer');
+                const jobSearchResults = document.getElementById('jobSearchResults');
+                
+                jobSearchContainer.style.display = 'block';
+                jobSearchResults.innerHTML = `
                     <h4 style="color: #dc3545;">❌ Job Search Error</h4>
                     <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 10px 0;">
                         <p><strong>Error:</strong> ${error.message}</p>
                         <p><strong>Possible Solutions:</strong></p>
                         <ul>
-                            <li>Make sure the job search service is running on port 3000</li>
+                            <li>Make sure the FastAPI server is running on port 8000</li>
                             <li>Check your PERPLEXITY_API_KEY environment variable</li>
                             <li>Verify network connectivity</li>
                         </ul>
-                        <p><em>Tip: Run <code>npm run start</code> in the src/job-search directory</em></p>
+                        <p><em>Tip: Run <code>source venv/bin/activate && python main.py</code></em></p>
                     </div>
                 `;
-                jobSearchOutput.style.display = 'block';
             } finally {
                 // Reset button state
                 searchJobsBtn.textContent = '🔍 Search Jobs with AI';
@@ -1130,13 +1154,49 @@ ${JSON.stringify(summary, null, 2)}`;
                    Seeking opportunities that leverage AI tools and automation technologies.`;
         }
         
-        function displayJobSearchResults(result) {
-            const jobSearchOutput = document.getElementById('jobSearchOutput');
+        // Tab switching functionality
+        function switchJobTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
             
-            let html = '<h4 style="color: #28a745;">🔍 AI Job Search Results</h4>';
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.style.background = '#28a745';
+                button.style.color = 'white';
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            if (tabName === 'results') {
+                document.getElementById('jobSearchResults').style.display = 'block';
+            } else if (tabName === 'raw') {
+                document.getElementById('rawResponseContent').style.display = 'block';
+            } else if (tabName === 'critique') {
+                document.getElementById('critiqueContent').style.display = 'block';
+            }
+            
+            // Activate selected tab button
+            event.target.style.background = '#ffffff';
+            event.target.style.color = '#28a745';
+            event.target.classList.add('active');
+        }
+
+        function displayJobSearchResults(result) {
+            const jobSearchContainer = document.getElementById('jobSearchContainer');
+            const jobSearchResults = document.getElementById('jobSearchResults');
+            const rawResponseContent = document.getElementById('rawResponseContent');
+            const critiqueContent = document.getElementById('critiqueContent');
+            
+            // Show the container
+            jobSearchContainer.style.display = 'block';
+            
+            // Results Tab Content
+            let resultsHtml = '<h4 style="color: #28a745; margin-top: 0;">🔍 AI Job Search Results</h4>';
             
             if (!result.jobs || result.jobs.length === 0) {
-                html += `
+                resultsHtml += `
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 10px 0;">
                         <p><strong>No jobs found</strong> with your current skills and role combination.</p>
                         <p><strong>Tips:</strong></p>
@@ -1148,14 +1208,15 @@ ${JSON.stringify(summary, null, 2)}`;
                     </div>
                 `;
             } else {
-                html += `
+                resultsHtml += `
                     <div style="margin: 15px 0; padding: 10px; background: #d4edda; border-radius: 5px;">
                         <strong>Found ${result.jobs.length} jobs</strong> matching your skills and AI tool requirements
+                        ${result.totalFound ? `<br><small>Filtered from ${result.totalFound} total matches</small>` : ''}
                     </div>
                 `;
                 
                 result.jobs.forEach((job, index) => {
-                    html += `
+                    resultsHtml += `
                         <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
                                 <h5 style="margin: 0; color: #28a745;">${job.title}</h5>
@@ -1222,7 +1283,7 @@ ${JSON.stringify(summary, null, 2)}`;
                 
                 // Add career analysis if available
                 if (result.analysis) {
-                    html += `
+                    resultsHtml += `
                         <div style="margin: 20px 0; padding: 20px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
                             <h5 style="color: #28a745; margin-bottom: 10px;">📈 Career Opportunity Analysis</h5>
                             <div style="color: #333; line-height: 1.6;">
@@ -1234,7 +1295,7 @@ ${JSON.stringify(summary, null, 2)}`;
                 
                 // Add citations if available
                 if (result.citations && result.citations.length > 0) {
-                    html += `
+                    resultsHtml += `
                         <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #6c757d;">
                             <h6 style="color: #6c757d;">📚 Sources:</h6>
                             <ul style="margin: 5px 0; padding-left: 20px;">
@@ -1245,11 +1306,220 @@ ${JSON.stringify(summary, null, 2)}`;
                 }
             }
             
-            jobSearchOutput.innerHTML = html;
-            jobSearchOutput.style.display = 'block';
+            // Populate Results Tab
+            jobSearchResults.innerHTML = resultsHtml;
+            
+            // Populate Raw Response Tab
+            rawResponseContent.innerHTML = `
+                <h4 style="color: #28a745; margin-top: 0;">🔬 Raw Perplexity Response</h4>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #6c757d; margin: 10px 0;">
+                    <h6>Search Criteria Used:</h6>
+                    <ul>
+                        <li><strong>Primary Role:</strong> ${result.searchCriteria?.primaryRole || 'Not specified'}</li>
+                        <li><strong>Skills:</strong> ${result.searchCriteria?.skillsProvided?.join(', ') || 'Not specified'}</li>
+                    </ul>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #ddd; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap; max-height: 600px; overflow-y: auto;">
+${result.rawResponse || 'Raw response not available'}
+                </div>
+            `;
+            
+            // Populate Critique Tab
+            const critiqueHtml = generateCritique(result);
+            critiqueContent.innerHTML = critiqueHtml;
             
             // Scroll to results
-            jobSearchOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            jobSearchContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function generateCritique(result) {
+            // Analyze the response and generate critique
+            const jobs = result.jobs || [];
+            const rawResponse = result.rawResponse || '';
+            const analysis = result.analysis || '';
+            
+            let score = 0;
+            let critiques = [];
+            let strengths = [];
+            
+            // Evaluation criteria
+            
+            // 1. Job Quality and Relevance (30 points)
+            if (jobs.length >= 5) {
+                score += 10;
+                strengths.push("Good job quantity (5+ results)");
+            } else if (jobs.length >= 3) {
+                score += 7;
+                strengths.push("Adequate job quantity (3+ results)");
+            } else {
+                critiques.push("Too few job results (<3 jobs found)");
+            }
+            
+            // Check for direct links and company names
+            const hasDirectLinks = jobs.some(job => job.link && job.link.includes('http'));
+            const hasCompanyNames = jobs.every(job => job.company && job.company !== 'N/A');
+            
+            if (hasDirectLinks) {
+                score += 10;
+                strengths.push("Jobs include direct application links");
+            } else {
+                critiques.push("Missing direct job application links");
+            }
+            
+            if (hasCompanyNames) {
+                score += 10;
+                strengths.push("All jobs include company names");
+            } else {
+                critiques.push("Some jobs missing company information");
+            }
+            
+            // 2. AI Tool Integration (25 points)
+            const aiToolMentioned = jobs.some(job => job.aiSkillsTools && job.aiSkillsTools.length > 0);
+            const diverseAITools = new Set(jobs.flatMap(job => job.aiSkillsTools || [])).size;
+            
+            if (aiToolMentioned) {
+                score += 15;
+                strengths.push("Jobs mention specific AI tools");
+                
+                if (diverseAITools >= 3) {
+                    score += 10;
+                    strengths.push(`Diverse AI tools mentioned (${diverseAITools} different tools)`);
+                } else {
+                    score += 5;
+                    critiques.push("Limited diversity in AI tools mentioned");
+                }
+            } else {
+                critiques.push("Jobs lack specific AI tool requirements");
+            }
+            
+            // 3. Non-tech Bias Check (20 points)
+            const techBiasKeywords = ['engineer', 'developer', 'programmer', 'software', 'technical', 'machine learning', 'tensorflow'];
+            const hasTechBias = jobs.some(job => 
+                techBiasKeywords.some(keyword => 
+                    job.title?.toLowerCase().includes(keyword) || 
+                    job.description?.toLowerCase().includes(keyword)
+                )
+            );
+            
+            if (!hasTechBias) {
+                score += 20;
+                strengths.push("Successfully avoided tech-heavy bias");
+            } else {
+                score += 10;
+                critiques.push("Some results show tech-heavy bias despite non-technical focus");
+            }
+            
+            // 4. Response Structure and Analysis (15 points)
+            if (analysis && analysis.length > 50) {
+                score += 10;
+                strengths.push("Includes career opportunity analysis");
+            } else {
+                critiques.push("Missing or weak career opportunity analysis");
+            }
+            
+            if (result.searchCriteria) {
+                score += 5;
+                strengths.push("Clear search criteria provided");
+            }
+            
+            // 5. Data Completeness (10 points)
+            const hasCompleteSalaryData = jobs.filter(job => job.salaryRange && job.salaryRange !== 'N/A').length;
+            const salaryPercentage = hasCompleteSalaryData / Math.max(jobs.length, 1) * 100;
+            
+            if (salaryPercentage >= 80) {
+                score += 10;
+                strengths.push("Most jobs include salary information");
+            } else if (salaryPercentage >= 50) {
+                score += 5;
+                strengths.push("Some jobs include salary information");
+            } else {
+                critiques.push("Most jobs missing salary information");
+            }
+            
+            // Generate rating
+            let rating, ratingColor, ratingDescription;
+            if (score >= 90) {
+                rating = "10/10";
+                ratingColor = "#28a745";
+                ratingDescription = "Exceptional - Perfect execution of the prompt requirements";
+            } else if (score >= 80) {
+                rating = "8-9/10";
+                ratingColor = "#28a745";
+                ratingDescription = "Excellent - Minor areas for improvement";
+            } else if (score >= 70) {
+                rating = "7-8/10";
+                ratingColor = "#ffc107";
+                ratingDescription = "Good - Meets most requirements with some gaps";
+            } else if (score >= 60) {
+                rating = "6-7/10";
+                ratingColor = "#fd7e14";
+                ratingDescription = "Fair - Significant improvement needed";
+            } else {
+                rating = "Below 6/10";
+                ratingColor = "#dc3545";
+                ratingDescription = "Poor - Major issues with prompt execution";
+            }
+            
+            return `
+                <h4 style="color: #28a745; margin-top: 0;">📊 Response Critique & Rating</h4>
+                
+                <div style="background: ${ratingColor}; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                    <h2 style="margin: 0; font-size: 2.5em;">${rating}</h2>
+                    <p style="margin: 10px 0 0 0; font-size: 1.2em;">${ratingDescription}</p>
+                    <small>Score: ${score}/100 points</small>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div style="background: #d4edda; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <h5 style="color: #28a745; margin-top: 0;">✅ Strengths</h5>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            ${strengths.map(strength => `<li style="margin: 5px 0;">${strength}</li>`).join('')}
+                            ${strengths.length === 0 ? '<li>No notable strengths identified</li>' : ''}
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #f8d7da; padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                        <h5 style="color: #dc3545; margin-top: 0;">❌ Areas for Improvement</h5>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            ${critiques.map(critique => `<li style="margin: 5px 0;">${critique}</li>`).join('')}
+                            ${critiques.length === 0 ? '<li>No significant issues found</li>' : ''}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff; margin: 20px 0;">
+                    <h5 style="color: #007bff; margin-top: 0;">🔍 Detailed Analysis</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div><strong>Jobs Returned:</strong> ${jobs.length}</div>
+                        <div><strong>With Direct Links:</strong> ${jobs.filter(job => job.link && job.link.includes('http')).length}</div>
+                        <div><strong>With AI Tools:</strong> ${jobs.filter(job => job.aiSkillsTools && job.aiSkillsTools.length > 0).length}</div>
+                        <div><strong>With Salary Data:</strong> ${hasCompleteSalaryData}</div>
+                        <div><strong>Unique AI Tools:</strong> ${diverseAITools}</div>
+                        <div><strong>Tech Bias Score:</strong> ${hasTechBias ? 'Some detected' : 'Clean'}</div>
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                    <h5 style="color: #856404; margin-top: 0;">💡 Recommendations for Next Iteration</h5>
+                    <ol style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
+                        ${critiques.length > 0 ? critiques.map(critique => {
+                            if (critique.includes('few job results')) {
+                                return '<li>Expand search criteria or reduce filtering strictness</li>';
+                            } else if (critique.includes('direct job')) {
+                                return '<li>Emphasize requirement for specific, active job posting URLs</li>';
+                            } else if (critique.includes('AI tool')) {
+                                return '<li>Strengthen the AI tool requirement in prompt</li>';
+                            } else if (critique.includes('tech-heavy')) {
+                                return '<li>Add stronger language to prevent technical role bias</li>';
+                            } else if (critique.includes('salary')) {
+                                return '<li>Request salary ranges more explicitly in prompt</li>';
+                            } else {
+                                return `<li>Address: ${critique}</li>`;
+                            }
+                        }).join('') : '<li>Response quality is excellent - maintain current approach</li>'}
+                    </ol>
+                </div>
+            `;
         }
         
         function downloadRedacted(text, filename) {

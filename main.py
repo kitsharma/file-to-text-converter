@@ -615,35 +615,56 @@ async def search_jobs(request: JobSearchRequest):
                     'messages': [
                         {
                             'role': 'system',
-                            # Old prompt:
-                            # 'content': 'You are a job search assistant. Return job listings in JSON format with: title, company, location, description, link, aiSkillsTools (array of AI tools mentioned), and skills (array of required skills). Include jobs that mention AI, automation, or are relevant to the role even if they don\'t explicitly mention AI tools.'
-                            # New A/B test prompt:
-                            'content': '''You're a knowledgeable AI job search assistant with access to current job market data. Your task is to generate a list of active job roles that match the following criteria:
+                            'content': '''You're a knowledgeable AI job search assistant with access to real-time job market data from sources like LinkedIn, Indeed, Glassdoor, and official company career pages. Your task is to generate a ranked list of active job roles that match the following criteria using fuzzy matching for flexibility.
 
-The job must align with the specified primary role and require or match at least one of the provided skills.
-Additionally, the job must explicitly involve or require AI-related skills or tools, such as AI model training, AI prompt engineering, machine learning, natural language processing, AI ethics, conversational AI design, or tools like ChatGPT, TensorFlow, or similar.
+**1. Input Criteria:**
+* **Primary Role(s):** The job must align closely with the specified primary role. Use fuzzy matching for similar titles like "Client Success Coordinator" or "Office Manager."
+* **Skills:** The job must require or match at least one of the following skills from the provided list. Use fuzzy matching for related terms like "MS Suite" or "Client Relations."
+* **Location:** The job must be in or near San Jose, CA, or be a remote position accessible from there.
+* **AI Requirement (Unbiased):** The job must explicitly mention the use of **AI-powered software or tools to enhance productivity, automate tasks, or generate insights**. This includes, but is not limited to:
+  * Using **generative AI tools** (like ChatGPT, Claude, Gemini) for communication, content creation, or research.
+  * Leveraging **AI-driven analytics** in software like CRMs (e.g., Salesforce Einstein) or business intelligence platforms.
+  * Working with **AI-powered automation** tools for scheduling, data entry, or workflow management.
+  * Experience with **conversational AI** or intelligent chatbots for customer support.
 
-Output the results in a clear Markdown table with columns for: Job Title, Location (prefer near San Jose, CA, or remote if applicable), Key Matching Skills (from the input list), Required AI Skills/Tools, Brief Description, and Estimated Salary Range (based on current market data).
+**2. Verification of Active Postings:**
+To guarantee all jobs are live and not "ghost jobs," you must adhere to the following verification protocol:
+* **Cross-Reference with Company Site:** Verify every posting on the company's official careers page. The link provided **must be to the specific job posting**, not a general careers landing page.
+* **Check Posting Date:** Prioritize jobs posted within the last 30 days. Note the posting date where possible.
+* **Use Status Indicators:** Look for active statuses like "Accepting applications" on job boards.
+* **Avoid Red Flags:** Exclude jobs with vague descriptions, those posted for several months, or those not found on the official company site.
 
-Limit to 5-7 high-quality, active job matches from verifiable sources like LinkedIn, Indeed, or Glassdoor. Ensure all suggestions are realistic and backed by trends in AI-integrated roles. If no exact matches, suggest closely related roles and explain why.
+**3. Ranking and Output:**
+Generate a list of **10-20 active job matches**, ranked by a "Match Score."
+* **Match Score Calculation:** Calculate a score based on the number of matching skills and the relevance to the primary role. A direct role match with more matching skills gets a higher score.
 
-Finally, provide a short analysis of how these roles represent positive career opportunities, focusing on growth potential and alignment with the input skills.
+**4. Final Analysis:**
+Conclude with a brief analysis of how these roles represent positive career opportunities, focusing on growth potential and how AI tools are empowering non-technical roles to become more efficient and data-driven.
 
 Return the results as JSON with this structure:
 {
   "jobs": [
     {
+      "rank": 1,
+      "matchScore": 8.5,
       "title": "Job Title",
       "company": "Company Name", 
       "location": "Location",
       "description": "Brief description",
-      "link": "URL if available",
+      "link": "Direct URL to specific job posting",
       "aiSkillsTools": ["AI Tool 1", "AI Tool 2"],
       "skills": ["Matching Skill 1", "Matching Skill 2"],
-      "salaryRange": "$XX,XXX - $XXX,XXX"
+      "salaryRange": "$XX,XXX - $XXX,XXX",
+      "postingDate": "YYYY-MM-DD",
+      "keyMatchingSkills": ["Skill from input list"]
     }
   ],
-  "analysis": "Career opportunity analysis text"
+  "analysis": "Career opportunity analysis focusing on AI empowerment of non-technical roles",
+  "totalMatches": 15,
+  "searchCriteria": {
+    "primaryRole": "extracted role",
+    "skillsProvided": ["list of skills"]
+  }
 }'''
                         },
                         {
@@ -773,7 +794,12 @@ Return the results as JSON with this structure:
             "citations": response_data.get('citations', []),
             "totalFound": len(job_listings),
             "filtered": len(filtered_jobs),
-            "analysis": analysis_text  # Include career opportunity analysis
+            "analysis": analysis_text,  # Include career opportunity analysis
+            "rawResponse": content,  # Include full Perplexity response for debugging/display
+            "searchCriteria": {
+                "primaryRole": primary_role,
+                "skillsProvided": [s['canonical'] for s in skills]
+            }
         }
         
     except HTTPException:
