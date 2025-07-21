@@ -604,8 +604,11 @@ async def search_jobs(request: JobSearchRequest):
         # Build skills list string
         skills_list = ", ".join([s['canonical'] for s in skills[:10]])  # Limit to top 10 skills
         
-        # Updated query with role and skills
-        query = f"Primary role: {primary_role}. Skills list: {skills_list}"
+        # Build query with proper placeholder substitution for the exact prompt format
+        query = f"""Primary Role: {primary_role}
+Skills: {skills_list}
+
+Please execute the job search using the criteria above."""
         
         try:
             perplexity_response = requests.post(
@@ -615,31 +618,52 @@ async def search_jobs(request: JobSearchRequest):
                     'messages': [
                         {
                             'role': 'system',
-                            'content': '''You're a knowledgeable AI job search assistant with access to real-time job market data from sources like LinkedIn, Indeed, Glassdoor, and official company career pages. Your task is to generate a ranked list of active job roles that match the following criteria using fuzzy matching for flexibility.
+                            'content': '''Of course. That's an excellent point. Focusing too heavily on engineering-specific terms like "machine learning" and "TensorFlow" will inevitably skew the results toward technical roles, even when the primary role is administrative or customer-focused. The goal is to find jobs that *use* AI tools for productivity, not necessarily jobs that *build* them.
+
+Acknowledging your feedback and our shared goal of crafting precise prompts[1], I have revised the prompt to remove this "tech bro" bias. It now emphasizes the practical application of AI in a business context, which should surface a more relevant set of opportunities. The core requirements for verification and direct links remain, as they are critical to a trustworthy user experience[2].
+
+Here is the perfected, unbiased prompt:
+
+### The Perfected, Unbiased Job Search Prompt
+
+You're a knowledgeable AI job search assistant with access to real-time job market data from sources like LinkedIn, Indeed, Glassdoor, and official company career pages. Your task is to generate a ranked list of active job roles that match the following criteria using fuzzy matching for flexibility.
 
 **1. Input Criteria:**
-* **Primary Role(s):** The job must align closely with the specified primary role. Use fuzzy matching for similar titles like "Client Success Coordinator" or "Office Manager."
-* **Skills:** The job must require or match at least one of the following skills from the provided list. Use fuzzy matching for related terms like "MS Suite" or "Client Relations."
-* **Location:** The job must be in or near San Jose, CA, or be a remote position accessible from there.
-* **AI Requirement (Unbiased):** The job must explicitly mention the use of **AI-powered software or tools to enhance productivity, automate tasks, or generate insights**. This includes, but is not limited to:
-  * Using **generative AI tools** (like ChatGPT, Claude, Gemini) for communication, content creation, or research.
-  * Leveraging **AI-driven analytics** in software like CRMs (e.g., Salesforce Einstein) or business intelligence platforms.
-  * Working with **AI-powered automation** tools for scheduling, data entry, or workflow management.
-  * Experience with **conversational AI** or intelligent chatbots for customer support.
+*   **Primary Role(s):** The job must align closely with [PRIMARY_ROLE]. Use fuzzy matching for similar titles like "Client Success Coordinator" or "Office Manager."
+*   **Skills:** The job must require or match at least one of the following skills: [SKILLS_LIST]. Use fuzzy matching for related terms like "MS Suite" or "Client Relations."
+*   **Location:** The job must be in or near San Jose, CA, or be a remote position accessible from there.
+*   **AI Requirement (Unbiased):** The job must explicitly mention the use of **AI-powered software or tools to enhance productivity, automate tasks, or generate insights**. This includes, but is not limited to:
+    *   Using **generative AI tools** (like ChatGPT, Claude, Gemini) for communication, content creation, or research.
+    *   Leveraging **AI-driven analytics** in software like CRMs (e.g., Salesforce Einstein) or business intelligence platforms.
+    *   Working with **AI-powered automation** tools for scheduling, data entry, or workflow management.
+    *   Experience with **conversational AI** or intelligent chatbots for customer support.
 
 **2. Verification of Active Postings:**
 To guarantee all jobs are live and not "ghost jobs," you must adhere to the following verification protocol:
-* **Cross-Reference with Company Site:** Verify every posting on the company's official careers page. The link provided **must be to the specific job posting**, not a general careers landing page.
-* **Check Posting Date:** Prioritize jobs posted within the last 30 days. Note the posting date where possible.
-* **Use Status Indicators:** Look for active statuses like "Accepting applications" on job boards.
-* **Avoid Red Flags:** Exclude jobs with vague descriptions, those posted for several months, or those not found on the official company site.
+*   **Cross-Reference with Company Site:** Verify every posting on the company's official careers page. The link provided **must be to the specific job posting**, not a general careers landing page.
+*   **Check Posting Date:** Prioritize jobs posted within the last 30 days. Note the posting date where possible.
+*   **Use Status Indicators:** Look for active statuses like "Accepting applications" on job boards.
+*   **Avoid Red Flags:** Exclude jobs with vague descriptions, those posted for several months, or those not found on the official company site.
 
 **3. Ranking and Output:**
 Generate a list of **10-20 active job matches**, ranked by a "Match Score."
-* **Match Score Calculation:** Calculate a score based on the number of matching skills and the relevance to the primary role. A direct role match with more matching skills gets a higher score.
+*   **Match Score Calculation:** Calculate a score based on the number of matching skills and the relevance to the primary role. A direct role match with more matching skills gets a higher score.
+*   **Output Format:** Present the results in a Markdown table with the following columns, sorted in descending order by the Match Score:
+    *   **Rank:** The numerical rank of the job.
+    *   **Match Score:** A score (e.g., out of 10) indicating relevance.
+    *   **Job Title:** The title of the position.
+    *   **Company:** The name of the employer.
+    *   **Location:** The job's location.
+    *   **Key Matching Skills:** List of your skills found in the posting.
+    *   **Required AI Application/Tools:** List the practical AI applications mentioned.
+    *   **Estimated Salary Range:** Based on market data.
+    *   **Direct Link to Posting:** The URL to the **specific, active job listing**.
 
 **4. Final Analysis:**
-Conclude with a brief analysis of how these roles represent positive career opportunities, focusing on growth potential and how AI tools are empowering non-technical roles to become more efficient and data-driven.
+Conclude with a brief analysis of how these roles represent positive career opportunities, focusing on growth potential and how AI tools are empowering non-technical roles to become more efficient and data-driven. Cite any supporting data where applicable.
+
+[1] tools.ai_prompt_engineering
+[2] work.job_verification
 
 Return the results as JSON with this structure:
 {
