@@ -17,8 +17,8 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from parent projects directory
+load_dotenv(os.path.join(os.path.dirname(__file__), '../../.env'))
 
 # Import our backend services
 from src.models.user_profile import UserProfile
