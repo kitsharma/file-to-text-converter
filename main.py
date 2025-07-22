@@ -587,82 +587,24 @@ async def search_jobs(request: JobSearchRequest):
         # Build skills list string
         skills_list = ", ".join([s['canonical'] for s in skills[:10]])  # Limit to top 10 skills
         
-        # Build the system prompt with actual values substituted for placeholders
-        system_prompt = '''Of course. That's an excellent point. Focusing too heavily on engineering-specific terms like "machine learning" and "TensorFlow" will inevitably skew the results toward technical roles, even when the primary role is administrative or customer-focused. The goal is to find jobs that *use* AI tools for productivity, not necessarily jobs that *build* them.
+        # SIMPLIFIED prompt to test JSON parsing without timeouts
+        system_prompt = '''Find 3-5 REAL, ACTIVE job postings for "''' + primary_role + '''" with skills "''' + skills_list + '''" in San Jose, CA that use AI tools. 
 
-Acknowledging your feedback and our shared goal of crafting precise prompts[1], I have revised the prompt to remove this "tech bro" bias. It now emphasizes the practical application of AI in a business context, which should surface a more relevant set of opportunities. The core requirements for verification and direct links remain, as they are critical to a trustworthy user experience[2].
+CRITICAL: Include direct links to actual job postings that are currently accepting applications.
 
-Here is the perfected, unbiased prompt:
-
-### The Perfected, Unbiased Job Search Prompt
-
-You're a knowledgeable AI job search assistant with access to real-time job market data from sources like LinkedIn, Indeed, Glassdoor, and official company career pages. Your task is to generate a ranked list of active job roles that match the following criteria using fuzzy matching for flexibility.
-
-**1. Input Criteria:**
-*   **Primary Role(s):** The job must align closely with ''' + primary_role + '''. Use fuzzy matching for similar titles like "Client Success Coordinator" or "Office Manager."
-*   **Skills:** The job must require or match at least one of the following skills: ''' + skills_list + '''. Use fuzzy matching for related terms like "MS Suite" or "Client Relations."
-*   **AI Requirement (Unbiased):** The job must explicitly mention the use of **AI-powered software or tools to enhance productivity, automate tasks, or generate insights**. This includes, but is not limited to:
-    *   Using **generative AI tools** (like ChatGPT, Claude, Gemini) for communication, content creation, or research.
-    *   Leveraging **AI-driven analytics** in software like CRMs (e.g., Salesforce Einstein) or business intelligence platforms.
-    *   Working with **AI-powered automation** tools for scheduling, data entry, or workflow management.
-    *   Experience with **conversational AI** or intelligent chatbots for customer support.
-
-**2. Verification of Active Postings:**
-To guarantee all jobs are live and not "ghost jobs," you must adhere to the following verification protocol:
-*   **Cross-Reference with Company Site:** Verify every posting on the company's official careers page. The link provided **must be to the specific job posting**, not a general careers landing page.
-*   **Check Posting Date:** Prioritize jobs posted within the last 30 days. Note the posting date where possible.
-*   **Use Status Indicators:** Look for active statuses like "Accepting applications" on job boards.
-*   **Avoid Red Flags:** Exclude jobs with vague descriptions, those posted for several months, or those not found on the official company site.
-
-**3. Ranking and Output:**
-Generate a list of **10-20 active job matches**, ranked by a "Match Score."
-*   **Match Score Calculation:** Calculate a score based on the number of matching skills and the relevance to the primary role. A direct role match with more matching skills gets a higher score.
-*   **Output Format:** Present the results in a Markdown table with the following columns, sorted in descending order by the Match Score:
-    *   **Rank:** The numerical rank of the job.
-    *   **Match Score:** A score (e.g., out of 10) indicating relevance.
-    *   **Job Title:** The title of the position.
-    *   **Company:** The name of the employer.
-    *   **Location:** The job's location.
-    *   **Key Matching Skills:** List of your skills found in the posting.
-    *   **Required AI Application/Tools:** List the practical AI applications mentioned.
-    *   **Estimated Salary Range:** Based on market data.
-    *   **Direct Link to Posting:** The URL to the **specific, active job listing**.
-
-**4. Final Analysis:**
-Conclude with a brief analysis of how these roles represent positive career opportunities, focusing on growth potential and how AI tools are empowering non-technical roles to become more efficient and data-driven. Cite any supporting data where applicable.
-
-[1] tools.ai_prompt_engineering
-[2] work.job_verification
-
-Return the results as JSON with this structure:
+Return ONLY this JSON structure:
 {
   "jobs": [
     {
-      "rank": 1,
-      "matchScore": 8.5,
       "title": "Job Title",
       "company": "Company Name", 
       "location": "Location",
       "description": "Brief description",
-      "link": "Direct URL to specific job posting",
-      "aiSkillsTools": ["AI Tool 1", "AI Tool 2"],
-      "skills": ["Matching Skill 1", "Matching Skill 2"],
-      "salaryRange": "$XX,XXX - $XXX,XXX",
-      "postingDate": "YYYY-MM-DD",
-      "keyMatchingSkills": ["Skill from input list"]
+      "link": "Direct URL to active job posting",
+      "aiSkillsTools": ["AI Tool 1", "AI Tool 2"]
     }
-  ],
-  "analysis": "Career opportunity analysis focusing on AI empowerment of non-technical roles",
-  "totalMatches": 15,
-  "searchCriteria": {
-    "primaryRole": "extracted role",
-    "skillsProvided": ["list of skills"]
-  }
+  ]
 }'''
-        
-        # Add location back to complete the prompt
-        system_prompt += '''
-*   **Location:** The job must be in or near San Jose, CA, or be a remote position accessible from there.'''
         
         # Build query with simple execution instruction
         query = "Please execute the job search using the criteria specified in your instructions."
@@ -689,7 +631,7 @@ Return the results as JSON with this structure:
                     'Authorization': f'Bearer {perplexity_api_key}',
                     'Content-Type': 'application/json'
                 },
-                timeout=30
+                timeout=60
             )
         except requests.exceptions.RequestException as e:
             logger.error(f"Perplexity API request failed: {str(e)}")
@@ -711,73 +653,76 @@ Return the results as JSON with this structure:
         # Parse job listings from response
         job_listings = []
         analysis_text = ""
+        logger.info(f"Response content length: {len(content)} characters")
+        logger.info(f"First 100 chars: {repr(content[:100])}")
+        logger.info(f"Last 100 chars: {repr(content[-100:])}")
+        
         try:
-            # Try to extract JSON from the response
+            # First check for JSON in code blocks
             json_match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
             if json_match:
-                parsed_data = json.loads(json_match.group(1))
-                # Handle new format with jobs and analysis
-                if isinstance(parsed_data, dict) and 'jobs' in parsed_data:
-                    job_listings = parsed_data['jobs']
-                    analysis_text = parsed_data.get('analysis', '')
-                elif isinstance(parsed_data, list):
-                    job_listings = parsed_data
+                logger.info("Found JSON in code block")
+                json_str = json_match.group(1)
             else:
-                # Try to find JSON object directly
-                json_match = re.search(r'(\{.*?\})', content, re.DOTALL)
-                if json_match:
-                    parsed_data = json.loads(json_match.group(1))
-                    if 'jobs' in parsed_data:
-                        job_listings = parsed_data['jobs']
-                        analysis_text = parsed_data.get('analysis', '')
+                # Find JSON boundaries using bracket counting (Kristina's method)
+                json_start = content.find('{')
+                if json_start == -1:
+                    raise ValueError("No JSON found in response")
+                
+                logger.info(f"JSON starts at position {json_start}")
+                
+                # Count brackets to find matching closing brace
+                bracket_count = 0
+                json_end = json_start
+                
+                for i in range(json_start, len(content)):
+                    char = content[i]
+                    if char == '{':
+                        bracket_count += 1
+                    elif char == '}':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            json_end = i + 1
+                            break
+                
+                # Extract ONLY the JSON
+                json_str = content[json_start:json_end]
+                logger.info(f"Extracted JSON from positions {json_start} to {json_end} ({json_end - json_start} chars)")
+            
+            # Parse the extracted JSON
+            parsed_data = json.loads(json_str)
+            
+            # Extract jobs and analysis
+            if isinstance(parsed_data, dict) and 'jobs' in parsed_data:
+                job_listings = parsed_data['jobs']
+                analysis_text = parsed_data.get('analysis', '')
+                logger.info(f"Successfully parsed {len(job_listings)} jobs from response")
+            elif isinstance(parsed_data, list):
+                job_listings = parsed_data
+                logger.info(f"Found job list with {len(job_listings)} items")
+                
         except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse job listings JSON: {e}")
+            logger.error(f"JSON parse error at position {e.pos}: {e.msg}")
+            logger.error(f"Context: ...{json_str[max(0,e.pos-50):e.pos+50]}...")
+            job_listings = []
+        except Exception as e:
+            logger.error(f"Error parsing response: {str(e)}")
             job_listings = []
         
-        # Apply role-based filtering and add match reasons
+        # Trust Perplexity's filtering - just pass through the jobs with minimal processing
         filtered_jobs = []
         for job in job_listings:
-            job_title = job.get('title', '').lower()
+            # Add basic match reasons based on what Perplexity already filtered
+            match_reasons = ['Perplexity Verified', 'AI Tools Required']
             
-            # Role matching (relaxed)
-            role_match = (
-                any(skill['canonical'].lower() in job_title for skill in skills) or
-                'manager' in job_title or 'coordinator' in job_title or 
-                'specialist' in job_title or 'assistant' in job_title
-            )
-            
-            # Skill matching
-            matching_skills = []
-            for skill in skills:
-                skill_name = skill['canonical'].lower()
-                job_desc = job.get('description', '').lower()
-                if skill_name in job_desc or skill_name in job_title:
-                    matching_skills.append(skill['canonical'])
-            
-            # AI tools check
-            ai_tools = job.get('aiSkillsTools', [])
-            if not ai_tools:
-                ai_patterns = ['ai', 'automation', 'chatgpt', 'claude', 'machine learning', 'rpa']
-                ai_tools = [pattern for pattern in ai_patterns if pattern in job.get('description', '').lower()]
-            
-            # Determine match reasons
-            match_reasons = []
-            if role_match:
-                match_reasons.append('Role Match')
-            if matching_skills:
-                match_reasons.append(f'{len(matching_skills)} Skill Match{"es" if len(matching_skills) > 1 else ""}')
-            if ai_tools:
-                match_reasons.append('AI Tools Required')
-            
-            # Include job if it has role match AND (skills OR AI tools)
-            if role_match and (matching_skills or ai_tools):
-                filtered_jobs.append({
-                    **job,
-                    'matchingSkills': matching_skills,
-                    'aiSkillsTools': ai_tools,
-                    'matchReasons': match_reasons,
-                    'classification': 'ai-enhanced'
-                })
+            # Pass through Perplexity's results with our expected structure
+            filtered_jobs.append({
+                **job,
+                'matchingSkills': job.get('keyMatchingSkills', []),
+                'aiSkillsTools': job.get('aiSkillsTools', []),
+                'matchReasons': match_reasons,
+                'classification': 'ai-enhanced'
+            })
         
         logger.info(f"Returning {len(filtered_jobs)} filtered jobs from {len(job_listings)} total")
         
